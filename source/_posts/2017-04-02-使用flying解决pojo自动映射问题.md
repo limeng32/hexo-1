@@ -5,30 +5,7 @@ description: 本节内容向您讲解如何使用 AutoMapperInterceptor 拦截�
 category: blog
 ---
 <a id="Index"></a>
-## 目录
-- [目录](#%E7%9B%AE%E5%BD%95)
-- [Hello World](#hello-world)
-- [flying 特征值描述](#flying-%E7%89%B9%E5%BE%81%E5%80%BC%E6%8F%8F%E8%BF%B0)
-- [insert & delete](#insert--delete)
-- [update & updatePersistent](#update--updatepersistent)
-- [selectAll & count](#selectall--count)
-- [foreign key](#foreign-key)
-- [complex condition](#complex-condition)
-- [limiter & sorter](#limiter--sorter)
-- [分页](#%E5%88%86%E9%A1%B5)
-- [乐观锁](#%E4%B9%90%E8%A7%82%E9%94%81)
-- [其它](#%E5%85%B6%E5%AE%83)
-  - [<font color="red">ignore tag</font>](#ignore-tag)
-  - [复数外键](#%E5%A4%8D%E6%95%B0%E5%A4%96%E9%94%AE)
-  - [跨数据源](#%E8%B7%A8%E6%95%B0%E6%8D%AE%E6%BA%90)
-  - [<font color="red">兼容 JPA 标签</font>](#%E5%85%BC%E5%AE%B9-jpa-%E6%A0%87%E7%AD%BE)
-- [附录](#%E9%99%84%E5%BD%95)
-  - [常见问题](#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98)
-  - [代码示例](#%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B)
-  - [account 表建表语句](#account-%E8%A1%A8%E5%BB%BA%E8%A1%A8%E8%AF%AD%E5%8F%A5)
-  - [role 表建表语句](#role-%E8%A1%A8%E5%BB%BA%E8%A1%A8%E8%AF%AD%E5%8F%A5)
-  - [AccountService 的实现方式](#accountservice-%E7%9A%84%E5%AE%9E%E7%8E%B0%E6%96%B9%E5%BC%8F)
-  
+
 ## [Hello World](#Index)
 上一篇文章中我们介绍了 flying 的基本情况，在展示第一个 demo 之前还需要做一些额外的工作，即描述您想让 mybatis 管理的数据的表结构。
 
