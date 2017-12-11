@@ -185,7 +185,7 @@ flying 的缓存的 key 值是由查询条件 pojo 按业务属性序列化后�
 
 ## [附录](#附录)
 <a id="flying-demo2"></a>
-### [代码示例](#Index)
+### [代码示例](#代码示例)
 为了您更方便的使用 flying 进行优化 mybatis 二级缓存，我们提供了一个 [跨数据源并使用二级缓存的代码示例](https://github.com/limeng32/flying-demo2/tree/use-flying-0.9.2) 供您查看。
 <a id="AccountTableCreater"></a>
 ### [account 表建表语句](#account-表建表语句)
