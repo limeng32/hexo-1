@@ -3,6 +3,8 @@ layout: post
 title: 使用 flying 解决 pojo 自动映射问题
 description: 本节内容向您讲解如何使用 AutoMapperInterceptor 拦截器来实现pojo的自动映射。
 category: blog
+date: 2017-04-02
+list_number: false
 ---
 
 ## [Hello World](#Hello-World)
