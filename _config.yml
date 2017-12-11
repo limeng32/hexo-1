@@ -81,7 +81,7 @@ theme: jacman
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
   type: git
-  repository: git@github.com:myactivitidoc/myactivitidoc.github.io.git
+  repository: git@github.com:limeng32/limeng32.github.com.git
   branch: master
 stylus:
   compress: true
