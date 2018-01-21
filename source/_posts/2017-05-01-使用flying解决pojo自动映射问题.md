@@ -3,7 +3,7 @@ layout: post
 title: 使用 flying 解决 pojo 自动映射问题
 description: 本节内容向您讲解如何使用 AutoMapperInterceptor 拦截器来实现pojo的自动映射。
 category: blog
-date: 2017-04-02
+date: 2017-05-01
 list_number: false
 ---
 
@@ -703,7 +703,7 @@ private String password;
 ```
 如果您既需要带有激活忽略标记的自动查询父对象又需要不带激活忽略标记的自动查询父对象，那您为查询对象定义多个 `resultMap` 即可。
 
-`最新版本新增` 忽略标记在 insert、update、updatePersist 中同样会生效，具体作用是激活后新增、修改时忽略此字段，某些情况下您会发现这种需要。另外，如果此字段受到 JPA 标签 `@Column` 修饰并且 `insertable = false` 或 `updateable = false`，则不论此字段上的 ignoreTag 为何，在任何情况下此字段都被认为是新增忽略或修改忽略。
+忽略标记在 insert、update、updatePersist 中同样会生效，具体作用是激活后新增、修改时忽略此字段，某些情况下您会发现这种需要。另外，如果此字段受到 JPA 标签 `@Column` 修饰并且 `insertable = false` 或 `updateable = false`，则不论此字段上的 ignoreTag 为何，在任何情况下此字段都被认为是新增忽略或修改忽略。
 ### [复数外键](#复数外键)
 有时候一个数据实体会有多个多对一关系指向另一个数据实体，例如考虑下面的情况：我们假设每个账户都有一个兼职角色，这样 account 表中就需要另一个字段 fk_second_role_id，而这个字段也是指向 role 表。为了满足这个需要，首先我们要在 account.xml 的 resultMap元素中，加入以下内容：
 ```xml
@@ -871,7 +871,7 @@ accountService.update(account);
 <a id="flying-demo2"></a>
 最后，这里有一个[跨数据源应用的代码示例](https://github.com/limeng32/flying-demo2/tree/use-flying-0.9.2)，相信您看完以后会对 flying 实现跨数据源的方法了然于胸。（同时这个例示还使用了 mybatis 的二级缓存，关于此方面内容我们会在下一篇文章中进行详细介绍）
 ### [兼容 JPA 标签](#兼容-JPA-标签)
-`最新版本新增` flying 对部分常用的 JPA 标签进行了兼容，具体内容为：
+flying 对部分常用的 JPA 标签进行了兼容，具体内容为：
 
 - `@Id` 变量标签，表示此变量对应主键
 - `@Column` 变量标签，描述字段定义，对 flying 有效属性：`name`（默认为该变量名）、`insertable`(若为 false 此字段在新增时永远被忽略)、`updateable`(若为 false 此字段在修改时永远被忽略)、`columnDefinition`（默认为该变量类型名，若指定则按值来推导类型，对应关系[见此](https://github.com/limeng32/mybatis.flying/blob/master/src/main/java/indi/mybatis/flying/utils/JdbcTypeEnum.java)）
