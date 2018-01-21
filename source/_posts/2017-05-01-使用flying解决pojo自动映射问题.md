@@ -869,7 +869,7 @@ accountService.update(account);
 然而跨数据源关联毕竟不同于单数据源，它无法做到将父对象除主键外的其它属性作为条件参与查询。实际上这是由于数据库的限制，目前大部分的数据库还不支持跨数据源的外键关联查询，更不用说是跨数据源异构数据库（例如一方是 oracle 另一方是 mysql）。当然对于支持跨数据源外键关联查询的数据库（例如使用了 federated 引擎的  mysql），我们在今后也会考虑支持它的特性。
 
 <a id="flying-demo2"></a>
-最后，这里有一个[跨数据源应用的代码示例](https://github.com/limeng32/flying-demo2/tree/use-flying-0.9.2)，相信您看完以后会对 flying 实现跨数据源的方法了然于胸。（同时这个例示还使用了 mybatis 的二级缓存，关于此方面内容我们会在下一篇文章中进行详细介绍）
+最后，这里有一个[跨数据源应用的代码示例](https://github.com/limeng32/flying-demo2/tree/use-flying-0.9.3)，相信您看完以后会对 flying 实现跨数据源的方法了然于胸。（同时这个例示还使用了 mybatis 的二级缓存，关于此方面内容我们会在下一篇文章中进行详细介绍）
 ### [兼容 JPA 标签](#兼容-JPA-标签)
 flying 对部分常用的 JPA 标签进行了兼容，具体内容为：
 
@@ -883,7 +883,7 @@ flying 对部分常用的 JPA 标签进行了兼容，具体内容为：
 - `@FieldMapperAnnotation` 和 `TableMapperAnnotation` 其次。
 - `@Column` 和 `@Table` 再次。
 
-关于使用 JPA 的更多内容您可以参考这个[示例](https://github.com/limeng32/flying-demo/tree/use-flying-0.9.2)。
+关于使用 JPA 的更多内容您可以参考这个[示例](https://github.com/limeng32/flying-demo2/tree/use-flying-0.9.3)。
 ## [附录](#附录)
 <a id="FAQ"></a>
 ### [常见问题](#常见问题)
@@ -898,7 +898,7 @@ A：flying 的 sql 语句是动态生成的，只要您指定了正确的字段�
 A：在单数据源情况下，这两种方式都可以实现“查询子对象时自动加载父对象”的需要；但在多数据源的情况下，只有 typeHandler 方式才能实现跨数据源关联。我们的建议是在任何情况下都只使用 typeHandler 方式，因为如果您打算在多数据源环境下并且使用 mybatis 的二级缓存，只有全部 resultMap 都采用 typeHandler 才能保证缓存的完整一致性。（在下一篇文章中会对此详细讲解）
 <a id="AccountTableCreater"></a>
 ### [代码示例](#代码示例)
-为了您更方便的使用 flying 进行开发，我们提供了一个[覆盖了本文大部分功能的单数据源的代码示例](https://github.com/limeng32/flying-demo/tree/use-flying-0.9.2)。如果您是对跨数据源感兴趣，则您应该关注[这里](#flying-demo2)。
+为了您更方便的使用 flying 进行开发，我们提供了一个[覆盖了本文大部分功能的代码示例](https://github.com/limeng32/flying-demo2/tree/use-flying-0.9.3)。
 ### [account 表建表语句](#account-表建表语句)
 ```sql
 CREATE TABLE account (
