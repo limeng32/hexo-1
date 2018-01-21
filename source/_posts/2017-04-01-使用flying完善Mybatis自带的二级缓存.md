@@ -23,7 +23,7 @@ mybatis 的二级缓存只存在于内存中，不会写入硬盘，但可以通
 	<setting name="lazyLoadTriggerMethods" value="" />
 </settings>
 ```
-需要注意的是 `settings` 中第一行 `cacheEnabled` 的值为 `true`，其它内容都和 [《flying-是什么》](http://flying-doc.limeng32.com/flying-%E6%98%AF%E4%BB%80%E4%B9%88) 中介绍的配置完全一致。
+需要注意的是 `settings` 中第一行 `cacheEnabled` 的值为 `true`，其它内容都和 [《flying-是什么》](http://flying-doc.limeng32.com/2017/06/01/2017-06-01-flying%20%E6%98%AF%E4%BB%80%E4%B9%88/) 中介绍的配置完全一致。
 
 在完成上述工作后，mybatis 的二级缓存就可以使用了。现在启动项目后，每次对数据库发起的查询请求都会被缓存进行拦截，如果在缓存中能找到结果（包括单个 pojo、pojo集合、数量等）就直接返回结果，不会对数据库产生压力；如果找不到结果再去数据库中进行查询，查询后返回结果的同时把此次结果记入缓存中，这样下次再进行相同条件查询时如果相关记录没进行过刷新型操作（如 update、delete），就会返回缓存中的结果；如果对某条数据进行了 update、delete 操作，会使得相关缓存失效，其中的机制在后面会有详细介绍。
 
@@ -58,7 +58,7 @@ public interface RoleMapper {
     public int delete(Role t);
 }
 ```
-`account.xml`、`role.xml`、`AccountService.java`、`RoleService.java`、`Account.java` 和 `Role.java` 与 [《使用 flying 解决 pojo 自动映射问题》](http://flying-doc.limeng32.com/%E4%BD%BF%E7%94%A8flying%E8%A7%A3%E5%86%B3pojo%E8%87%AA%E5%8A%A8%E6%98%A0%E5%B0%84%E9%97%AE%E9%A2%98) 中介绍的完全一致且不会在本文中进行修改，因此这里不再累述。
+`account.xml`、`role.xml`、`AccountService.java`、`RoleService.java`、`Account.java` 和 `Role.java` 与 [《使用 flying 解决 pojo 自动映射问题》](http://flying-doc.limeng32.com/2017/05/01/2017-05-01-%E4%BD%BF%E7%94%A8flying%E8%A7%A3%E5%86%B3pojo%E8%87%AA%E5%8A%A8%E6%98%A0%E5%B0%84%E9%97%AE%E9%A2%98/) 中介绍的完全一致且不会在本文中进行修改，因此这里不再累述。
 
 之后，我们再定义一个用于测试的数据集：
 ```xml
@@ -173,7 +173,7 @@ public interface RoleMapper {
 ## [跨数据源缓存](#跨数据源缓存)
 flying采用真实数据源配合自定义 TypeHandler 的方式来实现跨数据源，并可以将多个数据源的数据保存至同一缓存中，这一切都是自动完成的，您只需要给每个 <i>pojo_mapper</i>.java 都配置上合适的注解就能实现这一点，最终在缓存层面实现数据统一。
 
-有一点需要注意的是，在跨数据源且使用二级缓存时，您在 <i>pojo_mapper</i>.xml 中的 resultMap 只能以 typeHandler 方式实现多对一，而不能以 association 方式。关于这一点，您可以阅读 [《使用 flying 解决 pojo 自动映射问题》中的跨数据源](http://flying-doc.limeng32.com/%E4%BD%BF%E7%94%A8flying%E8%A7%A3%E5%86%B3pojo%E8%87%AA%E5%8A%A8%E6%98%A0%E5%B0%84%E9%97%AE%E9%A2%98#%E8%B7%A8%E6%95%B0%E6%8D%AE%E6%BA%90) 部分。
+有一点需要注意的是，在跨数据源且使用二级缓存时，您在 <i>pojo_mapper</i>.xml 中的 resultMap 只能以 typeHandler 方式实现多对一，而不能以 association 方式。关于这一点，您可以阅读 [《使用 flying 解决 pojo 自动映射问题》中的跨数据源](http://flying-doc.limeng32.com/2017/05/01/2017-05-01-%E4%BD%BF%E7%94%A8flying%E8%A7%A3%E5%86%B3pojo%E8%87%AA%E5%8A%A8%E6%98%A0%E5%B0%84%E9%97%AE%E9%A2%98/#%E8%B7%A8%E6%95%B0%E6%8D%AE%E6%BA%90) 部分。
 
 ## [注意事项](#注意事项)
 
