@@ -97,26 +97,30 @@ Account account = accountService.selectOne(accountCondition);
 ## [flying 特征值描述](#flying-特征值描述)
 <i>pojo_mapper</i>.xml 中的 flying#{?}:select 即是 flying 的特征值描述，如果您想用 flying 管理一个数据库操作，就用这行值替代原本应该写的 sql 语句，它的格式使用 linux 风格描述如下：
 ```xml
-flying#{?}:select[:<ignoreTag>]
+flying#{?}[<smartDataSourceId>:<connectionId>]:select[:<ignoreTag>]
 ```
 或者
 ```xml
-flying:{selectOne|selectAll|count|insert|update|updatePersistent|delete}[:<ignoreTag>]
+flying:{selectOne|selectAll|count|update|updatePersistent|delete}[<smartDataSourceId>:<connectionId>][:<ignoreTag>]
 ```
-在第一个“:”之前的部分是 flying 的标识符，为避免复数外键时的缓存问题，当您使用 select 操作时需在 flying 后面加上 #{?}，当您使用其它类型操作时不需要加 #{?}。
+或者 insert 操作
+```xml
+flying:insert[({uuid|uuid_no_line|millisecond|your.custom.KeyHandler})][<smartDataSourceId>:<connectionId>][:<ignoreTag>]
+```
+在第一个“:”之前的部分是 flying 的标识符，为避免复数外键时的缓存问题，当您使用 select 操作时需在 flying 后面加上 #{?}，当您使用其它类型操作时不需要加 #{?}。在它之后是数据库指定参数（可选），这是用来处理跨数据源的需求，[更多信息请参见这里。](#跨数据源（阳春新增）)
 
 第一个“:”和第二个“:”之间的部分是 flying 操作数据的方法，目前支持的方法有：
 `select`：按主键查询，并返回结果集中的对象；
 `selectOne`：按条件对象查询，只返回结果集中的第一个对象；
 `selectAll`：按条件对象查询，返回结果集中所有对象组成的集合；
 `count`：按条件对象查询，返回结果数量；
-`insert`：按参数对象增加一条记录；
 `update`：按参数对象中的非 null 属性更新一条记录，以参数主键为准；
 `updatePersistent`：按参数对象中的所有属性更新一条记录，以参数主键为准，此操作会把参数对象为 null 属性在数据库中也更新为 null；
 `delete`：按参数对象的主键删除一条记录；
+`insert`：按参数对象增加一条记录，在 insert 之后可以以括号的方式指定主键生成方式（可选），内置有 uuid、无下横线的 uuid_no_line、按毫秒值 millisecond，也可完全自定义主键生成器类；
 本文为描述方便，大部分方法名（即方法配置中的 id）与其操作类型（即 flying 特征值的中间部分）相同，实际上方法名可以任意取，当您打算在同一个 <i>pojo_mapper</i>.xml 中定义多个操作类型相同的方法时就会用到。其它操作类型的开发还在评估之中，如果您有想法也可以告诉我们。
 
-第二个“:”之后的部分是忽略标记，忽略标记是可选的。在 select、selectAll、selectOne 类型操作中如果配置了忽略标记，会使返回结果的类定义中配置了相同忽略标记的变量不被查询出来。在其它类型操作中配置忽略标记没有效果。
+第二个“:”之后的部分是忽略标记，忽略标记是可选的。在 select、selectAll、selectOne 类型操作中如果配置了忽略标记，会使返回结果的类定义中配置了相同忽略标记的变量不被查询出来。在 update、updatePersistent、insert 中配置忽略标记会使相应变量不参与数据库操作。
 
 关于忽略标记更多的内容请见 [本文 ignore tag 部分。](#ignore-tag)
 
@@ -316,7 +320,7 @@ private Role role;
 ```xml
 <association property="role" javaType="Role" select="myPackage.RoleMapper.select" column="fk_role_id" /> 
 ```
-写出以上信息后，flying 在配置文件层面已经完全理解了数据结构。（此处除 association 之外还有另一种使用 typeHandler 的解决方案，稍后您可以在 [跨数据源](#%E8%B7%A8%E6%95%B0%E6%8D%AE%E6%BA%90) 一节中看到。）
+写出以上信息后，flying 在配置文件层面已经完全理解了数据结构。（以上为同数据源表关联情况，当跨数据源时请您[参考这里](#跨数据源（阳春新增）)）
 
 最后总结一下，完整版的 `account.xml` 如下：
 ```xml
@@ -416,7 +420,7 @@ accountService.updatePersistent(newAccount);
 ```
 
 ## [complex condition](#complex-condition)
-之前我们展示的例子中，条件只有“相等”一种，但在实际情况中我们会遇到各种各样的条件：大于、不等于、like、in、is not null 等等。这些情况 flying 也是能够处理的，但首先我们要引入一个“条件对象”的概念。条件对象是实体对象的子类，但它只为查询而存在，它拥有实体对象的全部属性，同时它还有一些专为查询服务的属性。例如下面是 Account 对象的条件对象 AccountCondition 的代码：
+之前我们展示的例子中，条件只有“相等”一种，但在实际情况中我们会遇到各种各样的条件：大于、不等于、like、in、is not null 等等。这些情况 flying 也是能够处理的，但首先我们要引入一个“条件对象”的概念。条件对象是实体对象的子类，但它只为查询而存在，它拥有实体对象的全部属性，同时它还有一些专为查询服务的属性。例如下面是 Account 对象的条件对象 AccountCondition 的代码（只需要继承一个 pojo 并实现 Conditionable 接口即可）：
 ```java
 package myPackage;
 import java.util.Collection;
@@ -425,7 +429,6 @@ import indi.mybatis.flying.annotations.ConditionMapperAnnotation;
 import indi.mybatis.flying.annotations.QueryMapperAnnotation;
 import indi.mybatis.flying.models.Conditionable;
 import indi.mybatis.flying.statics.ConditionType;
-@QueryMapperAnnotation(tableName = "account")
 public class AccountCondition extends Account implements Conditionable {
 
     @ConditionMapperAnnotation(dbFieldName = "name", conditionType = ConditionType.Like)
@@ -653,6 +656,8 @@ delete from account where id = '${id}' and opLock = '${opLock}'
 在实际应用中，可以借助 update、updatePersistent、delete 方法的返回值来判断是否变动了数据（一般来说返回 0 表示没变动，1 表示有变动），继而判断锁是否有效，是否合法（符合业务逻辑），最后决定整个事务是提交还是回滚。
 
 最后我们再来谈谈为什么不建议给乐观锁字段加上 setter 方法。首先在代码中直接修改一个 pojo 的乐观锁值是很危险的事情，它会导致事务逻辑的不可靠；其次乐观锁不参与 select、selectAll、selectOne 方法，即便给它赋值在查询时也不会出现；最后乐观锁不参与 insert 方法，无论给它赋什么值在新增数据中此字段的值都是零，即乐观锁总是从零开始增长。
+## [customTypeHandler（阳春新增）](#customTypeHandler（阳春新增）)
+在 `flying-阳春` 中 `@FieldMapperAnnotation` 和 `@ConditionMapperAnnotation` 增加了 `customTypeHandler` 属性，使您可以用自定义的 TypeHandler 来处理变量映射，因为  `customTypeHandler` 具有最高优先级。一个应用它的地方是跨数据源的“或逻辑”查询，您可以在[这里](http://flying-doc.limeng32.com/2017/04/15/2017-04-15-flying-阳春%20新增特性/#%E8%B7%A8%E5%BA%93%E6%88%96%E9%80%BB%E8%BE%91%E6%9F%A5%E8%AF%A2)看到。
 ## [其它](#其它)
 ### [ignore tag](#ignore-tag)
 有时候，我们希望在查询中忽略某个字段的值，但在作为查询条件和更新时要用到这个字段。一个典型的场景是 password 字段，出于安全考虑我们不想在 select 方法返回的结果中看到它的值，但我们需要在查询条件（如判断登录）和更新（如修改密码）时使用到它，这时我们可以在 Account.java 中加入以下代码：
@@ -727,127 +732,41 @@ condition.setSecondRole(secondRole);
 Collection<Account> accounts = accountService.selectAll(condition);
 ```
 可见，复数外键的增删改查等操作与普通外键是类似的，只需要注意虽然 secondRole 的类型为Role，但它的 getter、setter 是 getSecondRole()、setSecondRole()，而不是 getRole()、setRole()即可。
-### [跨数据源](#跨数据源)
-在实际开发中，越来越多的系统采用分布式数据库设计，flying 对此也提供支持。flying 采用的是真实数据源配合自定义 TypeHandler 的方式，而非动态切换虚拟数据源方式，这样做的好处如下：
-- 动态切换虚拟数据源方式需要频繁切换数据源，而真实数据源方式本身就是多个数据源无需切换，避免了这方面的开销。
-- 动态切换虚拟数据源方式多数据源和单数据源实现差异较大，用户如果从单数据源升级至多数据源需要变更很多内容；而采用真实数据源配合自定义 TypeHandler 的方式，完全利用了 mybatis 自身支持多数据源特性，将单数据源看做多数据源的一种特例，每次新增数据源的配置都很少且易于理解。
-- flying 对真实数据源配合自定义 TypeHandler 的方式进行了优化，当您在业务代码中调用数据时您不需要知道哪些是跨数据源调用哪些是单数据源调用，您也基本感知不到它们的不同。
+### [跨数据源（阳春新增）](#跨数据源（阳春新增）)
+在实际开发中，越来越多的系统采用分布式数据库设计，flying 对此也提供支持。flying 采用的是在特征值中指定 “数据源 id 和 connection 名称” 的方式，这样用户在写 flying 语句时就可以指定它执行在哪里，但需要注意的是这种方式下 connection 需要自己回收资源，所以您指定的数据源必须一种 `SmartDataSource`，例如：org.springframework.jdbc.datasource.SingleConnectionDataSource.class
 
-为了更好的说明 flying 跨数据源实现方式，在本小节中，我们假定 Account 表和 Role 表处于不同的数据源内，前者的数据源为 dataSource1，后者的数据源为 dataSource2。因此 spring 中的配置如下：
+为了更好的说明 flying 跨数据源实现方式，在本小节中，我们假定 Account 表和 Role 表处于不同的数据源内，前者的数据源为 dataSource1，后者的数据源为 dataSource2，同时为了跨数据源需要，我们还要定义对应的 smartDataSource1 和 smartDataSource2：
 ```xml
+<!-- dataSource1 与 smartDataSource1 指向同一个数据库，前者负责普通查询，后者负责跨库查询 -->
 <bean id="dataSource1" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close" />
-<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
-	<property name="configLocation" value="classpath:Configuration.xml" />
-	<property name="dataSource" ref="dataSource1" />
-	<property name="mapperLocations" value="classpath*:myPackage/mapper/*.xml" />
-	<property name="typeAliasesPackage" value="myPackage" />
-</bean>
-<bean id="mapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-	<property name="basePackage" value="myPackage" />
-	<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
-</bean>
+<bean id="smartDataSource1" class="org.springframework.jdbc.datasource.SingleConnectionDataSource" init-method="initConnection" destroy-method="closeConnection">
 
+<!-- dataSource2 与smartDataSource2 指向同一个数据库，前者负责普通查询，后者负责跨库查询 -->		
 <bean id="dataSource2" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close" />
-<bean id="sqlSessionFactory2" class="org.mybatis.spring.SqlSessionFactoryBean">
-	<property name="configLocation" value="classpath:Configuration.xml" />
-	<property name="dataSource" ref="dataSource2" />
-	<property name="mapperLocations" value="classpath*:myPackage/mapper2/*.xml" />
-	<property name="typeAliasesPackage" value="myPackage" />
-</bean>
-<bean id="mapperScannerConfigurer2" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
-	<property name="basePackage" value="myPackage" />
-	<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory2" />
-</bean>
+<bean id="smartDataSource2" class="org.springframework.jdbc.datasource.SingleConnectionDataSource" init-method="initConnection" destroy-method="closeConnection">
 
-    <!--因为TypeHandler并非第一时间初始化，不能以@Autowired方式调用Bean，所以增加ApplicationContextProvider方式来调用Bean-->
-<bean id="applicationContextProvder" class="indi.demo.flying.ApplicationContextProvider" />
+<!-- 还需要在 component的base-package 中加入 indi.mybatis.flying，或者在这里明确声明 indi.mybatis.flying.FlyingContextProvider -->
+<bean id="applicationContextProvder" class="indi.mybatis.flying.FlyingContextProvider" />
 ```
-以上配置文件中描述了两个数据源 `dataSource1` 和 `dataSource2` 以及它们对应的 `sqlSessionFactory` 和 `mapperScannerConfigurer`，至于最后的 `applicationContextProvder`，它的具体代码是：
+之后我们还要替换 Account 类中 role 属性的注解，如下所示：
 ```java
-package indi.demo.flying;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-
-public class ApplicationContextProvider implements ApplicationContextAware {
-	private static ApplicationContext context;
-
-	public static ApplicationContext getApplicationContext() {
-		return context;
-	}
-
-	@Override
-	public void setApplicationContext(ApplicationContext ctx) throws BeansException {
-		context = ctx;
-	}
-}
-```
-这个 `ApplicationContextProvider` 的作用我们后面就会看到。之后我们还要替换 Account 类中 role 属性的注解，如下所示：
-```java
-    @FieldMapperAnnotation(dbFieldName = "fk_role_id", jdbcType = JdbcType.INTEGER, dbAssociationTypeHandler = myPackage.typeHandler.RoleTypeHandler.class)
+    @FieldMapperAnnotation(dbFieldName = "fk_role_id", jdbcType = JdbcType.INTEGER, dbCrossedAssociationUniqueKey = "role_id")
     private Role role;
 ```
-这实际上是将原本的 `dbAssociationUniqueKey` 替换为 `dbAssociationTypeHandler`，而 `dbAssociationTypeHandler` 需要指定一个类作为值，所以我们还要开发一个 RoleTypeHandler，如下：
-```java
-package myPackage.typeHandler;
-import java.sql.CallableStatement;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import org.apache.ibatis.type.BaseTypeHandler;
-import org.apache.ibatis.type.JdbcType;
-import org.apache.ibatis.type.MappedTypes;
-import org.apache.ibatis.type.TypeHandler;
-import indi.demo.flying.ApplicationContextProvider;
-import myPackage.Role;
-import myPackage.RoleService;
-
-@MappedTypes({ Role.class })
-public class RoleTypeHandler extends BaseTypeHandler<Role> implements TypeHandler<Role> {
-	@Override
-	public Role getNullableResult(ResultSet arg0, String arg1) throws SQLException {
-		if (arg0.getString(arg1) == null) {
-			return null;
-		}
-		return (getService().mySelect(arg0.getString(arg1)));
-	}
-	@Override
-	public Role getNullableResult(ResultSet arg0, int arg1) throws SQLException {
-		if (arg0.getString(arg1) == null) {
-			return null;
-		}
-		return (getService().mySelect(arg0.getString(arg1)));
-	}
-	@Override
-	public Role getNullableResult(CallableStatement arg0, int arg1) throws SQLException {
-		if (arg0.getString(arg1) == null) {
-			return null;
-		}
-		return (getService().mySelect(arg0.getString(arg1)));
-	}
-	@Override
-	public void setNonNullParameter(PreparedStatement arg0, int arg1, Role arg2, JdbcType arg3) throws SQLException {
-		if (arg2 != null) {
-			arg0.setString(arg1, arg2.getId());
-		}
-	}
-
-	/*
-	 * 因为此TypeHandler并非第一时间初始化，不能以@Autowired方式调用RoleService，所以采用下面的方式
-	 */
-	private RoleService getService() {
-		return (RoleService) ApplicationContextProvider.getApplicationContext().getBean(RoleService.class);
-	}
-}
+这实际上是将原本的 `dbAssociationUniqueKey` 替换为 `dbCrossedAssociationUniqueKey`，然后我们还需要对 Role.xml 文件里增加一个操作，如下：
+```xml
+<select id="selectForAssociation" resultMap="result">
+    flying#{?}(smartDataSource2:dataBaseName2):select
+</select>
 ```
-如果您对这个类的代码不是很熟悉，您可以了解一下 mybatis 自定义 TypeHandler 的机制。另外，您可以看到我们之前开发的 `ApplicationContextProvider` 在此处发挥了作用。最后，我们还要修改 account.xml 中的 resultMap，如下所示：
+最后，我们还要修改 account.xml 中的 resultMap，如下所示：
 ```xml
     <resultMap id="result" type="Account" autoMapping="true">
         <id property="id" column="account_id" />
-        <result property="role" typeHandler="myPackage.typeHandler.RoleTypeHandler" column="fk_role_id" />
+        <association property="role" javaType="Role" select=""myPackage.RoleMapper.selectForAssociation"  column="fk_role_id" />
     </resultMap>
 ```
-以上是把 resultMap 中的 association 方式替换为 typeHandler 方式，关于 association 方式和 typeHandler 方式的区别，[您可以参考这里](#association-or-typeHandler)。
+以上是让 association 中的 select 指向新建的 selectForAssociation 方法，这个方法永远都会使用 `dataBaseName2` 数据库，无论它在哪里被调用，如果需要跨源，它会使用 `smartDataSource2` 数据源，因为这是一个智能数据源，所以不需要考虑关闭连接的问题。（如果是普通数据源，会因为无法关闭的连接积累而导致连接池占满，因此 <b>必须</b> 使用实现了 org.springframework.jdbc.datasource.SmartDataSource 接口的智能数据源）
 
 现在，您就可以使用如下代码来操作跨数据源的 Account 和 Role 对象了：
 ```java
@@ -867,9 +786,9 @@ accountService.update(account);
 /* 此时数据库中account和另一数据源的otherRole关联起来 */
 ```
 然而跨数据源关联毕竟不同于单数据源，它无法做到将父对象除主键外的其它属性作为条件参与查询。实际上这是由于数据库的限制，目前大部分的数据库还不支持跨数据源的外键关联查询，更不用说是跨数据源异构数据库（例如一方是 oracle 另一方是 mysql）。当然对于支持跨数据源外键关联查询的数据库（例如使用了 federated 引擎的  mysql），我们在今后也会考虑支持它的特性。
-
 <a id="flying-demo2"></a>
-最后，这里有一个[跨数据源应用的代码示例](https://github.com/limeng32/flying-demo2/tree/use-flying-0.9.3)，相信您看完以后会对 flying 实现跨数据源的方法了然于胸。（同时这个例示还使用了 mybatis 的二级缓存，关于此方面内容我们会在下一篇文章中进行详细介绍）
+最后，这里有一个[跨数据源应用的代码示例](https://github.com/limeng32/flying-demo2/tree/use-flying-0.9.4)，相信您看完以后会对 flying 实现跨数据源的方法了然于胸。（同时这个例示还使用了 mybatis 的二级缓存，关于此方面内容我们会在下一篇文章中进行详细介绍）
+
 ### [兼容 JPA 标签](#兼容-JPA-标签)
 flying 对部分常用的 JPA 标签进行了兼容，具体内容为：
 
@@ -883,22 +802,21 @@ flying 对部分常用的 JPA 标签进行了兼容，具体内容为：
 - `@FieldMapperAnnotation` 和 `TableMapperAnnotation` 其次。
 - `@Column` 和 `@Table` 再次。
 
-关于使用 JPA 的更多内容您可以参考这个[示例](https://github.com/limeng32/flying-demo2/tree/use-flying-0.9.3)。
+关于使用 JPA 的更多内容您可以参考这个[示例](https://github.com/limeng32/flying-demo2/tree/use-flying-0.9.4)。
 ## [附录](#附录)
 <a id="FAQ"></a>
 ### [常见问题](#常见问题)
 <a id="why-no-sql"></a>
 1、为何<i>pojo_mapper</i>.xml 中没有 sql 语句细节？
-
 A：flying 的 sql 语句是动态生成的，只要您指定了正确的字段名，就绝对不会出现 sql 书写上的问题。并且 flying 采用了缓存机制，您无需担心动态生成 sql 的效率问题。
 
 <a id="association-or-typeHandler"></a>
-2、resultMap 中 association 和 typeHandler 两种方式的区别？
+2、在单数据源中是否可以使用 flying#{?}(smartDataSource:dataBaseName):select 方式调用？
+A：无论是单数据源还是多数据源，只要您指定的 dataBaseName 正确，flying 查询就能正常工作。并且它能自动判断当前是否需要跨数据源，当需要跨源且您指定的 smartDataSource 正确时，就能成功跨源查询。整个过程完全自动，所以您可以放心地在任何情况下都使用这种查询。
 
-A：在单数据源情况下，这两种方式都可以实现“查询子对象时自动加载父对象”的需要；但在多数据源的情况下，只有 typeHandler 方式才能实现跨数据源关联。我们的建议是在任何情况下都只使用 typeHandler 方式，因为如果您打算在多数据源环境下并且使用 mybatis 的二级缓存，只有全部 resultMap 都采用 typeHandler 才能保证缓存的完整一致性。（在下一篇文章中会对此详细讲解）
 <a id="AccountTableCreater"></a>
 ### [代码示例](#代码示例)
-为了您更方便的使用 flying 进行开发，我们提供了一个[覆盖了本文大部分功能的代码示例](https://github.com/limeng32/flying-demo2/tree/use-flying-0.9.3)。
+为了您更方便的使用 flying 进行开发，我们提供了一个[覆盖了本文大部分功能的代码示例](https://github.com/limeng32/flying-demo2/tree/use-flying-0.9.4)。
 ### [account 表建表语句](#account-表建表语句)
 ```sql
 CREATE TABLE account (
