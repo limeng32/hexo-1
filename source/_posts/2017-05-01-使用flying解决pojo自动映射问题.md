@@ -656,6 +656,74 @@ delete from account where id = '${id}' and opLock = '${opLock}'
 在实际应用中，可以借助 update、updatePersistent、delete 方法的返回值来判断是否变动了数据（一般来说返回 0 表示没变动，1 表示有变动），继而判断锁是否有效，是否合法（符合业务逻辑），最后决定整个事务是提交还是回滚。
 
 最后我们再来谈谈为什么不建议给乐观锁字段加上 setter 方法。首先在代码中直接修改一个 pojo 的乐观锁值是很危险的事情，它会导致事务逻辑的不可靠；其次乐观锁不参与 select、selectAll、selectOne 方法，即便给它赋值在查询时也不会出现；最后乐观锁不参与 insert 方法，无论给它赋什么值在新增数据中此字段的值都是零，即乐观锁总是从零开始增长。
+## [或逻辑查询](#或逻辑查询)
+为实现此特性 flying 使用了 Or 标签类（[代码见此](https://gitee.com/limeng32/mybatis.flying/blob/master/src/main/java/indi/mybatis/flying/annotations/Or.java)），这个标签的内容是ConditionMapperAnnotation标签的数组，所以在查询条件类中可以有如下标签代码：
+
+```java
+@Or({
+  @ConditionMapperAnnotation(dbFieldName = "name", conditionType = ConditionType.HeadLike),
+  @ConditionMapperAnnotation(dbFieldName = "age", conditionType = ConditionType.Equal), 
+  @ConditionMapperAnnotation(dbFieldName = "name", conditionType = ConditionType.HeadLike) 
+})
+```
+（上面是实现 name like 'XXX%' or age = 'YYY' or name like 'ZZZ%' 查询的条件）
+
+同时为了赋值方便，我们采用Object数组的不定参数形式作为变量类型，于是整个代码变成了：
+```java
+@Or({
+  @ConditionMapperAnnotation(dbFieldName = "name", conditionType = ConditionType.HeadLike),
+  @ConditionMapperAnnotation(dbFieldName = "age", conditionType = ConditionType.Equal), 
+  @ConditionMapperAnnotation(dbFieldName = "name", conditionType = ConditionType.HeadLike) 
+})
+private Object[] condition1;
+
+public Object[] getCondition1 () {
+	return condition1;
+}
+public void setCondition1 (Object... condition1) {
+	this. condition1 = condition1;
+}
+```
+如果我们描述 "name like '张%' or age = 27 or name like '李%' "，代码如下：
+```java
+personCondition.setCondition1("张", 27, "李");
+/* 注意参数顺序和 condition1 上 @ConditionMapperOrAnnotation 的内部顺序一致 */
+```
+您之前掌握的[绝大部分 ConditionMapperAnnotation](https://gitee.com/limeng32/mybatis.flying/blob/master/src/main/java/indi/mybatis/flying/statics/ConditionType.java) 都可以写在 `@Or` 中，只有本身就是集合型的条件类型例外，以下列出不能进入 `@Or` 的类型：
+
+`MultiLikeAND`、`MultiLikeOR`、 `In`、`NotIn`
+
+除此之外的查询条件均可以参与或查询。
+
+### [外键或逻辑查询](#外键或逻辑查询)
+flying 在同库跨表查询时也可以做不同表上条件的或逻辑查询，比如我们要实现 person.name = 'XXX' or role.name = 'YYY' 查询，其中 role 是 person 业务上的父对象。我们可以在 role 的条件类中加入如下变量：
+```java
+@Or({ 
+  @ConditionMapperAnnotation(dbFieldName = "name", conditionType = ConditionType.Equal),
+  @ConditionMapperAnnotation(dbFieldName = "name", conditionType = ConditionType.Equal, subTarget = mypackage.Person.class) })
+private Object[] roleNameEqualsOrPersonNameEquals;
+
+public Object[] getRoleNameEqualsOrPersonNameEquals () {
+	return roleNameEqualsOrPersonNameEquals;
+}
+public void setRoleNameEqualsOrPersonNameEquals (Object... roleNameEqualsOrPersonNameEquals) {
+	this. roleNameEqualsOrPersonNameEquals = roleNameEqualsOrPersonNameEquals;
+}
+```
+上面的代码中第一行 `ConditionMapperAnnotation` 指的是 role 表，第二行指的是 person 表，因为是由 role 指向 person，所以第二行出现了 `subTarget` 参数用来引导路径，它的值就是业务上子对象的类路径。
+
+值得注意的是，外键或逻辑查询中，跨表的 `@Or` 条件永远要写在业务上的父对象里，这是考虑到从子对象上寻找父对象并非唯一（例如多重外键情况，一个 person 有多个 role 型父对象，分别表示主要角色和次要角色等），然而从父对象上寻找子对象永远是唯一的。
+
+如果您要查询用户名为“张三”或角色名为“wfadmin”的用户时，您只需这样做：
+```java
+RoleConditon rc = new RoleCondition();
+rc.setRoleNameEqualsOrPersonNameEquals("wfadmin","张三");
+Person p = new Person();
+p.setRole(rc);
+Person<Collection> persons = personService.selectAll(p);
+```
+无论 role 是 person 业务上的直接父对象还是间接父对象都可以这样查询。
+
 ## [customTypeHandler（阳春新增）](#customTypeHandler（阳春新增）)
 在 `flying-阳春` 中 `@FieldMapperAnnotation` 和 `@ConditionMapperAnnotation` 增加了 `customTypeHandler` 属性，使您可以用自定义的 TypeHandler 来处理变量映射，因为  `customTypeHandler` 具有最高优先级。一个应用它的地方是跨数据源的“或逻辑”查询，您可以在[这里](http://flying-doc.limeng32.com/2017/04/15/2017-04-15-flying-阳春%20新增特性/#%E8%B7%A8%E5%BA%93%E6%88%96%E9%80%BB%E8%BE%91%E6%9F%A5%E8%AF%A2)看到。
 ## [其它](#其它)
