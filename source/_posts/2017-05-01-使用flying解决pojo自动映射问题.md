@@ -320,7 +320,7 @@ private Role role;
 ```xml
 <association property="role" javaType="Role" select="myPackage.RoleMapper.select" column="fk_role_id" /> 
 ```
-写出以上信息后，flying 在配置文件层面已经完全理解了数据结构。（以上为同数据源表关联情况，当跨数据源时请您[参考这里](#跨数据源（阳春新增）)）
+写出以上信息后，flying 在配置文件层面已经完全理解了数据结构。
 
 最后总结一下，完整版的 `account.xml` 如下：
 ```xml
@@ -417,6 +417,21 @@ accountService.update(newAccount);
 newAccount.setRole(null);
 accountService.updatePersistent(newAccount);
 /*现在 newAccount.getRole()为 null，在数据库中也不再有关联（注意在这里 update 方法起不到这种效果，因为 update 会忽略 null）*/
+```
+
+## [复杂外键关系](@复杂外键关系)
+自 `0.9.7` 开始支持复杂的外键关系，实现方式为在注解 [@FieldMapperAnnotation](https://gitee.com/limeng32/mybatis.flying/blob/master/src/main/java/indi/mybatis/flying/annotations/FieldMapperAnnotation.java) 中加入 [类型为 @ForeignAssociation[] 的新属性 associationExtra()](https://gitee.com/limeng32/mybatis.flying/blob/master/src/main/java/indi/mybatis/flying/annotations/ForeignAssociation.java)，例如为实现 ‘a left join b on (a.f_id = b.id and a.name_a = b.name_b and a.version_a >= b.version_b and ...)’，您可以使用如下代码：
+
+```java
+@FieldMapperAnnotation(dbFieldName = "f_id", jdbcType = JdbcType.Integer, dbAssociationUniqueKey = "id", associationExtra = {
+			@ForeignAssociation(dbFieldName = "name_a", dbAssociationFieldName = "name_b"), 
+			@ForeignAssociation(dbFieldName = "version_a", dbAssociationFieldName = "version_b" ,condition=AssociationCondition.GreaterOrEqual) })
+```
+
+同时自 `0.9.7` 起在默认左外连接的基础上，增加了右外连接，实现方式为在注解 [@FieldMapperAnnotation](https://gitee.com/limeng32/mybatis.flying/blob/master/src/main/java/indi/mybatis/flying/annotations/FieldMapperAnnotation.java) 中加入 [新属性 associationType()](https://gitee.com/limeng32/mybatis.flying/blob/master/src/main/java/indi/mybatis/flying/statics/AssociationType.java)，例如为实现一个右外连接您可以使用如下代码：
+
+```java
+@FieldMapperAnnotation(dbFieldName = "f_id", jdbcType = JdbcType.Integer, dbAssociationUniqueKey = "id", associationType = AssociationType.RightJoin)
 ```
 
 ## [complex condition](#complex-condition)
@@ -724,8 +739,8 @@ Person<Collection> persons = personService.selectAll(p);
 ```
 无论 role 是 person 业务上的直接父对象还是间接父对象都可以这样查询。
 
-## [customTypeHandler（阳春新增）](#customTypeHandler（阳春新增）)
-在 `flying-阳春` 中 `@FieldMapperAnnotation` 和 `@ConditionMapperAnnotation` 增加了 `customTypeHandler` 属性，使您可以用自定义的 TypeHandler 来处理变量映射，因为  `customTypeHandler` 具有最高优先级。一个应用它的地方是跨数据源的“或逻辑”查询，您可以在[这里](http://flying-doc.limeng32.com/2017/04/15/2017-04-15-flying-阳春%20新增特性/#%E8%B7%A8%E5%BA%93%E6%88%96%E9%80%BB%E8%BE%91%E6%9F%A5%E8%AF%A2)看到。
+## [customTypeHandler](#customTypeHandler)
+自 `0.9.4` 起 `@FieldMapperAnnotation` 和 `@ConditionMapperAnnotation` 增加了 `customTypeHandler` 属性，使您可以用自定义的 TypeHandler 来处理变量映射，因为  `customTypeHandler` 具有最高优先级。
 ## [其它](#其它)
 ### [ignore tag](#ignore-tag)
 有时候，我们希望在查询中忽略某个字段的值，但在作为查询条件和更新时要用到这个字段。一个典型的场景是 password 字段，出于安全考虑我们不想在 select 方法返回的结果中看到它的值，但我们需要在查询条件（如判断登录）和更新（如修改密码）时使用到它，这时我们可以在 Account.java 中加入以下代码：
@@ -800,62 +815,6 @@ condition.setSecondRole(secondRole);
 Collection<Account> accounts = accountService.selectAll(condition);
 ```
 可见，复数外键的增删改查等操作与普通外键是类似的，只需要注意虽然 secondRole 的类型为Role，但它的 getter、setter 是 getSecondRole()、setSecondRole()，而不是 getRole()、setRole()即可。
-### [跨数据源（阳春新增）](#跨数据源（阳春新增）)
-在实际开发中，越来越多的系统采用分布式数据库设计，flying 对此也提供支持。flying 采用的是在特征值中指定 “数据源 id 和 connection 名称” 的方式，这样用户在写 flying 语句时就可以指定它执行在哪里，但需要注意的是这种方式下 connection 需要自己回收资源，所以您指定的数据源必须一种 `SmartDataSource`，例如：org.springframework.jdbc.datasource.SingleConnectionDataSource.class
-
-为了更好的说明 flying 跨数据源实现方式，在本小节中，我们假定 Account 表和 Role 表处于不同的数据源内，前者的数据源为 dataSource1，后者的数据源为 dataSource2，同时为了跨数据源需要，我们还要定义对应的 smartDataSource1 和 smartDataSource2：
-```xml
-<!-- dataSource1 与 smartDataSource1 指向同一个数据库，前者负责普通查询，后者负责跨库查询 -->
-<bean id="dataSource1" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close" />
-<bean id="smartDataSource1" class="org.springframework.jdbc.datasource.SingleConnectionDataSource" init-method="initConnection" destroy-method="closeConnection">
-
-<!-- dataSource2 与smartDataSource2 指向同一个数据库，前者负责普通查询，后者负责跨库查询 -->		
-<bean id="dataSource2" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close" />
-<bean id="smartDataSource2" class="org.springframework.jdbc.datasource.SingleConnectionDataSource" init-method="initConnection" destroy-method="closeConnection">
-
-<!-- 还需要在 component的base-package 中加入 indi.mybatis.flying，或者在这里明确声明 indi.mybatis.flying.FlyingContextProvider -->
-<bean id="applicationContextProvder" class="indi.mybatis.flying.FlyingContextProvider" />
-```
-之后我们还要替换 Account 类中 role 属性的注解，如下所示：
-```java
-    @FieldMapperAnnotation(dbFieldName = "fk_role_id", jdbcType = JdbcType.INTEGER, dbCrossedAssociationUniqueKey = "role_id")
-    private Role role;
-```
-这实际上是将原本的 `dbAssociationUniqueKey` 替换为 `dbCrossedAssociationUniqueKey`，然后我们还需要对 Role.xml 文件里增加一个操作，如下：
-```xml
-<select id="selectForAssociation" resultMap="result">
-    flying#{?}(smartDataSource2:dataBaseName2):select
-</select>
-```
-最后，我们还要修改 account.xml 中的 resultMap，如下所示：
-```xml
-    <resultMap id="result" type="Account" autoMapping="true">
-        <id property="id" column="account_id" />
-        <association property="role" javaType="Role" select=""myPackage.RoleMapper.selectForAssociation"  column="fk_role_id" />
-    </resultMap>
-```
-以上是让 association 中的 select 指向新建的 selectForAssociation 方法，这个方法永远都会使用 `dataBaseName2` 数据库，无论它在哪里被调用，如果需要跨源，它会使用 `smartDataSource2` 数据源，因为这是一个智能数据源，所以不需要考虑关闭连接的问题。（如果是普通数据源，会因为无法关闭的连接积累而导致连接池占满，因此 <b>必须</b> 使用实现了 org.springframework.jdbc.datasource.SmartDataSource 接口的智能数据源）
-
-现在，您就可以使用如下代码来操作跨数据源的 Account 和 Role 对象了：
-```java
-/* 跨数据源时，也可以新建关联了父对象的子对象 */
-Account newAccount = new Account();
-newAccount.setRole(role);
-accountService.insert(newAccount);
-/* 此时数据库中新增的newAccount已于另一数据源的role关联起来 */
-
-/* 跨数据源时，子对象查询时也可自动加载父对象 */
-Account account = accountService.select(newAccount.getId());
-/* 此时account.getRole()的值即account关联的处于另一数据源的role */
-
-/* 跨数据源时，子对象也可更新父对象 */
-account.setRole(otherRole);
-accountService.update(account);
-/* 此时数据库中account和另一数据源的otherRole关联起来 */
-```
-然而跨数据源关联毕竟不同于单数据源，它无法做到将父对象除主键外的其它属性作为条件参与查询。实际上这是由于数据库的限制，目前大部分的数据库还不支持跨数据源的外键关联查询，更不用说是跨数据源异构数据库（例如一方是 oracle 另一方是 mysql）。当然对于支持跨数据源外键关联查询的数据库（例如使用了 federated 引擎的  mysql），我们在今后也会考虑支持它的特性。
-<a id="flying-demo2"></a>
-最后，这里有一个[跨数据源应用的代码示例](https://github.com/limeng32/flying-demo2/tree/use-flying-0.9.4)，相信您看完以后会对 flying 实现跨数据源的方法了然于胸。（同时这个例示还使用了 mybatis 的二级缓存，关于此方面内容我们会在下一篇文章中进行详细介绍）
 
 ### [兼容 JPA 标签](#兼容-JPA-标签)
 flying 对部分常用的 JPA 标签进行了兼容，具体内容为：
