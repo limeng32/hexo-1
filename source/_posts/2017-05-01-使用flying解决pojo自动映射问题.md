@@ -17,10 +17,10 @@ list_number: false
 <mapper namespace="myPackage.AccountMapper">
     <cache />
     <select id="select" resultMap="result">
-        flying#{?}:select
+        {"action":"select#{?}"}
     </select>
     <select id="selectOne" resultMap="result">
-        flying:selectOne
+        {"action":"selectOne"}
     </select>
     <resultMap id="result" type="Account" autoMapping="true">
         <id property="id" column="account_id" />
@@ -37,21 +37,21 @@ public interface AccountMapper {
     public Account selectOne(Account t);
 }
 ```
-到目前为止一切都和不使用 flying 时一模一样，您可能奇怪的地方是：account.xml 中的 select 和 selectOne 方法描述中的 flying#{?}:select 是什么。这是这条查询的 flying 特征值描述，[在 flying 特征值描述部分会有解释。](#why-no-sql)马上我们就会在对象实体 Account 中看到更多不一样的地方，Account.java 的代码如下：
+到目前为止一切都和不使用 flying 时一模一样，您可能奇怪的地方是：account.xml 中的 select 和 selectOne 方法描述中的 json 是什么。这是这条查询的 flying 特征值描述，flying 将以往的 sql 语句抽离为 json 和执行对象，[在 flying 特征值描述部分会有解释。](#flying-特征值描述)马上我们就会在对象实体 Account 中看到更多不一样的地方，Account.java 的代码如下：
 ```java
 package myPackage;
 import org.apache.ibatis.type.JdbcType;
 import indi.mybatis.flying.annotations.FieldMapperAnnotation;
 import indi.mybatis.flying.annotations.TableMapperAnnotation;
-    
+
 @TableMapperAnnotation(tableName = "account")
 public class Account {
     @FieldMapperAnnotation(dbFieldName = "account_id", jdbcType = JdbcType.INTEGER, isUniqueKey = true)
     private Integer id;
-	    
+
     @FieldMapperAnnotation(dbFieldName = "name", jdbcType = JdbcType.VARCHAR)
     private java.lang.String name;
-	    
+
     public Integer getId() {
 	    return id;
     }
@@ -70,7 +70,7 @@ public class Account {
 ```java
 @TableMapperAnnotation(tableName = "account")
 @FieldMapperAnnotation(dbFieldName = "id", jdbcType = JdbcType.INTEGER, isUniqueKey = true)
-@FieldMapperAnnotation(dbFieldName = "name", jdbcType = JdbcType.VARCHAR) 
+@FieldMapperAnnotation(dbFieldName = "name", jdbcType = JdbcType.VARCHAR)
 ```
 下面我们分别来解释它们的含义。
 
@@ -95,43 +95,70 @@ Account account = accountService.selectOne(accountCondition);
 与以往的方式相比，这种方式是不是变得优雅了很多？关于 select 和 selectOne 之间的区别，我们在后面的章节会讲到。
 
 ## [flying 特征值描述](#flying-特征值描述)
-<i>pojo_mapper</i>.xml 中的 flying#{?}:select 即是 flying 的特征值描述，如果您想用 flying 管理一个数据库操作，就用这行值替代原本应该写的 sql 语句，它的格式使用 linux 风格描述如下：
-```xml
-flying#{?}[<smartDataSourceId>:<connectionId>]:select[:<ignoreTag>]
-```
-或者
-```xml
-flying:{selectOne|selectAll|count|update|updatePersistent|delete}[<smartDataSourceId>:<connectionId>][:<ignoreTag>]
-```
-或者 insert 操作
-```xml
-flying:insert[({uuid|uuid_no_line|millisecond|your.custom.KeyHandler})][<smartDataSourceId>:<connectionId>][:<ignoreTag>]
-```
-在第一个“:”之前的部分是 flying 的标识符，为避免复数外键时的缓存问题，当您使用 select 操作时需在 flying 后面加上 #{?}，当您使用其它类型操作时不需要加 #{?}。在它之后是数据库指定参数（可选），这是用来处理跨数据源的需求，[更多信息请参见这里。](#跨数据源（阳春新增）)
+<i>pojo_mapper</i>.xml 中的 {"action":"select#{?}"} 即是 flying 的特征值描述，如果您想用 flying 管理一个数据库操作，就用这样一个 json 替代原本应该写的 sql 语句，它的格式使用 linux 风格描述如下（由 __ 开头和结尾的参数需由用户提供）：
 
-第一个“:”和第二个“:”之间的部分是 flying 操作数据的方法，目前支持的方法有：
+查询操作：
+```xml
+{
+  "action":"select#{?}|selectAll|selectOne"
+    [, "ignore":"__ignore__"][, "whiteList":"__whiteList__"]
+    [, "index":"__index__"]
+    [, "properties":{
+      "__property_1__":{"id":"__id_1__", "prefix":"__prefix_1__"}[ ,...n ]
+      }
+    ]
+}
+```
+计数操作：
+```xml
+{
+  "action":"count"[, "index":"__index__"]
+}
+```
+修改、删除操作：
+```xml
+{
+  "action":"update|updatePersistent|delete"
+    [, "ignore":"__ignore__"][, "whiteList":"__whiteList__"]
+}
+```
+新增操作
+```xml
+{
+  "action":"insert|insertBatch"
+    [, "ignore":"__ignore__"][, "whiteList":"__whiteList__"]
+    [, "keyGenerator":"uuid|uuid_no_line|millisecond|__your.custom.KeyHandler__"]
+}
+```
+为避免特定情况下的缓存问题，当您使用 select 操作时需在它后面加上 #{?} 变成 select#{?}，当您使用其它类型操作时不需要这么做。
+
+"action" 参数是 flying 操作数据的方法，目前支持的方法有：
 `select`：按主键查询，并返回结果集中的对象；
 `selectOne`：按条件对象查询，只返回结果集中的第一个对象；
 `selectAll`：按条件对象查询，返回结果集中所有对象组成的集合；
 `count`：按条件对象查询，返回结果数量；
-`update`：按参数对象中的非 null 属性更新一条记录，以参数主键为准；
-`updatePersistent`：按参数对象中的所有属性更新一条记录，以参数主键为准，此操作会把参数对象为 null 属性在数据库中也更新为 null；
-`delete`：按参数对象的主键删除一条记录；
+`update`：按参数对象中的非 null 属性更新记录，可按主键执行一条也可批量执行多条；
+`updatePersistent`：按参数对象中的所有属性更新一条记录，以参数主键为准，此操作会把参数对象为 null 的属性在数据库中也更新为 [null]；
+`delete`：按参数对象删除记录，可按主键执行一条也可批量执行多条；
 `insert`：按参数对象增加一条记录，在 insert 之后可以以括号的方式指定主键生成方式（可选），内置有 uuid、无下横线的 uuid_no_line、按毫秒值 millisecond，也可完全自定义主键生成器类；
-本文为描述方便，大部分方法名（即方法配置中的 id）与其操作类型（即 flying 特征值的中间部分）相同，实际上方法名可以任意取，当您打算在同一个 <i>pojo_mapper</i>.xml 中定义多个操作类型相同的方法时就会用到。其它操作类型的开发还在评估之中，如果您有想法也可以告诉我们。
+`insertBatch`：按集合型参数对象增加多条记录，"keyGenerator" 同 `insert`；
 
-第二个“:”之后的部分是忽略标记，忽略标记是可选的。在 select、selectAll、selectOne 类型操作中如果配置了忽略标记，会使返回结果的类定义中配置了相同忽略标记的变量不被查询出来。在 update、updatePersistent、insert 中配置忽略标记会使相应变量不参与数据库操作。
+本文为描述方便，大部分方法名（即方法配置中的 id）与其操作类型（即 json 中的 "action"）相同，实际上方法名可以任意取，当您打算在同一个 <i>pojo_mapper</i>.xml 中定义多个操作类型相同的方法时就会发现这一点。如果您有更多操作类型的想法请告诉我们。
 
-关于忽略标记更多的内容请见 [本文 ignore tag 部分。](#ignore-tag)
+"ignore" 参数内容是黑名单标记，更多的内容请见 [本文 ignore tag 部分。](#ignore-tag) "whiteList" 参数内容是白名单标记，更多的内容请见 [本文 white list tag 部分。](#white-list-tag)
+
+"index" 参数内容为指定索引语句，更多内容请见后。
+
+"properties" 参数内容为外键关联表的查询情况，这里使用 <i>pojo_mapper</i>.xml 中的 resultMap 中的 association 中的 columnPrefix 方式，使得我们可在一次查询中获得外键关联表中所有需要的记录，是处理关联查询的最佳方式，更多内容请见后。
 
 ## [insert & delete](#insert-amp-delete)
 在最基本的 select 之后，我们再看新增功能。但在此之前，需要先在 account.xml 中增加以下内容：
 ```xml
 <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-    flying:insert
+    {"action":"insert"}
 </insert>
 ```
-上面的 `useGeneratedKeys="true"` 表示主键自增，如果您不使用主键自增策略此处可以省略，上面的语句和一般 mybatis 映射文件的区别在于具体 sql 语句变成了 flying 特征值描述。
+上面的 `useGeneratedKeys="true"` 表示主键自增，如果您不使用主键自增策略此处可以省略，上面的语句和一般 mybatis 映射文件的区别在于具体 sql 语句变成了 json。
 
 同样在 AccountMapper.java 中我们需要加入：
 ```java
@@ -146,7 +173,7 @@ accountService.insert(newAccount);
 然后我们再看删除功能。先在 account.xml 中增加以下内容：
 ```xml
 <delete id="delete">
-    flying:delete
+    {"action":"delete"}
 </delete>
 ```
 然后在 `AccountMapper.java` 中加入：
@@ -159,17 +186,19 @@ accountService.delete(accountToDelete);
 ```
 delete 方法的返回值代表执行 sql 后产生影响的条数，一般来说，返回值为 0 表示 sql 执行后没有效果，返回值为 1 表示 sql 执行成功，在代码中可以通过判断 delete 方法的返回值来实现更复杂的事务逻辑。
 
+delete 操作支持批量执行，这点在进阶部分我们会进行讨论。
+
 ## [update & updatePersistent](#update-amp-updatePersistent)
 接下来我们看看更新功能，这里我们要介绍两个方法：update（更新）和 updatePersistent（完全更新）。首先，在 `account.xml` 中增加以下内容：
 ```xml
 <update id="update">
-    flying:update
+    {"action":"update"}
 </update>
 <update id="updatePersistent">
-    flying:updatePersistent
+    {"action":"updatePersistent"}
 </update>
 ```
-上面的语句和一般 mybatis 映射文件的区别在于具体 sql 语句变成了 flying 特征值描述。
+上面的语句和一般 mybatis 映射文件的区别在于具体 sql 语句变成了 json。
 
 然后在 `AccountMapper.java` 中加入：
 ```java
@@ -188,15 +217,17 @@ update 和 updatePersistent 方法的返回值代表执行 sql 后产生影响�
 accountToUpdate.setName(null);
 accountService.update(accountToUpdate);
 ```
-实际上数据库中这条数据的 name 字段不会改变，因为 flying 对为 null 的属性有保护措施。这在大多数情况下都是合理的，但如果我们真的需要在数据库中将这条数据的 name 字段设为 null，updatePersistent 就派上了用场。我们可以执行：
+实际上数据库中这条数据的 name 字段不会改变，因为 update 对值为 null 的属性有保护措施。这在大多数情况下都是合理的，但如果我们真的需要在数据库中将这条数据的 name 字段设为 null，updatePersistent 就派上了用场。我们可以执行：
 ```java
 accountToUpdate.setName(null);
 accountService.updatePersistent(accountToUpdate);
 ```
 这样数据库中这条数据的 name 字段就会变为 null。可见 updatePersistent 会把 pojo 中所有的属性都更新到数据库中，而 update 只更新不为 null 的属性。在实际使用 updatePersistent 时，您需要特别小心慎重，因为当时 pojo 中为 null 的属性有可能比您想象的多。
 
-## [selectAll & count](#selectAll-amp-count)
-在之前学习 select 和 selectOne 时，细心的您可能已经发现，这两个方法要完成的工作似乎是相同的。的确 select 和 selectOne 都返回 1 个绑定了数据的 pojo，但它们接受的参数不同：select 接受主键参数；selectOne 接受 pojo 参数，这个 pojo 中的所有被 `@FieldMapperAnnotation` 标记过的属性都会作为“相等”条件传递到 sql 语句中。之所以要这么设计，是因为我们有时会需要按照一组条件返回多条数据或者数量，即 selectAll 方法与 count 方法，这个时候以 pojo 作为入参最为合适。为了更清晰的讲述，我们先给 `Account.java` 再增加一个属性 address：
+update 操作支持批量执行，这点在进阶部分我们会进行讨论。
+
+## [selectAll & selectOne & count](#selectAll-amp-selectOne-amp-count)
+在之前学习 select 和 selectOne 时，细心的您可能已经发现，这两个方法要完成的工作似乎是相同的。的确 select 和 selectOne 都返回 1 个绑定了数据的 pojo，但它们接受的参数不同：select 接受主键参数；selectOne 接受 pojo 参数，这个 pojo 中的所有被 `@FieldMapperAnnotation` 标记过的属性都会用 “等于” 条件传递到 sql 语句中。之所以要这么设计，是因为我们有时会需要按照一组条件返回多条数据或者数量，即 selectAll 方法与 count 方法，这个时候以 pojo 作为入参最为合适。为了更清晰的讲述，我们先给 `Account.java` 再增加一个属性 address：
 ```java
 @FieldMapperAnnotation(dbFieldName = "address", jdbcType = JdbcType.VARCHAR)
 private java.lang.String address;
@@ -205,10 +236,10 @@ private java.lang.String address;
 然后我们在 `account.xml` 中增加以下内容：
 ```xml
 <select id="selectAll" resultMap="result">
-    flying:selectAll
+    {"action":"selectAll"}
 </select>
 <select id="count" resultType="int">
-    flying:count
+    {"action":"count"}
 </select>
 ```
 再在 `AccountMapper.java` 中加入
@@ -223,7 +254,7 @@ condition.setAddress("beijing");
 Collection<Account> accountCollection = accountService.selectAll(condition);
 int accountNumber = accountService.count(condition);
 ```
-（当然一般来说执行 selectAll 后就不需要执行 count 了，我们取结果集的 size 即可，但如果我们只关心数量不关心具体数据集时，执行 count 比执行 selectAll 更节省时间）
+（当然一般来说执行 selectAll 后就不需要执行 count 了，我们取结果集的 size() 即可，但如果我们只关心数量不关心具体数据集时，执行 count 比执行 selectAll 更节省时间）
 
 如果我们想查询所有 address 为 “shanghai” 同时 name 为 “ella” 的账户，则执行以下代码：
 ```java
@@ -248,28 +279,28 @@ Account account = accountService.selectOne(condition);
 <mapper namespace="myPackage.RoleMapper">
     <cache />
     <select id="select" resultMap="result">
-        flying#{?}:select
+        {"action":"select#{?}"}
     </select>
     <select id="selectOne" resultMap="result">
-        flying:selectOne
+        {"action":"selectOne"}
     </select>
     <select id="selectAll" resultMap="result">
-        flying:selectAll
+        {"action":"selectAll"}
     </select>
     <select id="count" resultType="int">
-        flying:count
+        {"action":"count"}
     </select>
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        flying:insert
+        {"action":"insert"}
     </insert>
     <update id="update">
-        flying:update
+        {"action":"update"}
     </update>
     <update id="updatePersistent">
-        flying:updatePersistent
+        {"action":"updatePersistent"}
     </update>
     <delete id="delete">
-        flying:delete
+        {"action":"delete"}
     </delete>
     <resultMap id="result" type="Role" autoMapping="true">
         <id property="id" column="role_id" />
@@ -296,13 +327,13 @@ package myPackage;
 import org.apache.ibatis.type.JdbcType;
 import indi.mybatis.flying.annotations.FieldMapperAnnotation;
 import indi.mybatis.flying.annotations.TableMapperAnnotation;
-    
+
 @TableMapperAnnotation(tableName = "role")
 public class Role {
 
     @FieldMapperAnnotation(dbFieldName = "role_id", jdbcType = JdbcType.INTEGER, isUniqueKey = true)
     private Integer id;
-	    
+
     @FieldMapperAnnotation(dbFieldName = "role_name", jdbcType = JdbcType.VARCHAR)
     private String roleName;
     /*相关的getter和setter方法请自行补充*/
@@ -316,9 +347,13 @@ private Role role;
 ```
 以上代码中，`dbFieldName` 的值为数据库表 account 中指向表 role 的外键名，`jdbcType` 的值为这个外键的类型，`dbAssociationUniqueKey` 的值为此外键对应的另一表的主键的名称，写出以上信息后，flying 在代码层面已经完全理解了数据结构。
 
-最后在 `account.xml` 的 `resultMap` 元素中，加入以下内容
+然后后在 `account.xml` 的 `resultMap` 元素中，加入以下内容
 ```xml
-<association property="role" javaType="Role" select="myPackage.RoleMapper.select" column="fk_role_id" /> 
+<association property="role" resultMap="myPackage.RoleMapper.result" columnPrefix="role__" />
+```
+同时给 `account.xml` 的 `select`、`selectAll`、`selectOne` 的 json 中加入以下内容
+```
+"properties":{"role":{"id":"myPackage.RoleMapper.select", "prefix":"role__"}}
 ```
 写出以上信息后，flying 在配置文件层面已经完全理解了数据结构。
 
@@ -329,35 +364,43 @@ private Role role;
 <mapper namespace="myPackage.AccountMapper">
     <cache />
     <select id="select" resultMap="result">
-        flying#{?}:select
+      {"action":"select#{?}", "properties":{
+        "role":{"id":"myPackage.RoleMapper.select", "prefix":"role__"},
+      }}
     </select>
     <select id="selectOne" resultMap="result">
-        flying:selectOne
+      {"action":"selectOne", "properties":{
+        "role":{"id":"myPackage.RoleMapper.select", "prefix":"role__"},
+      }}
     </select>
     <select id="selectAll" resultMap="result">
-        flying:selectAll
+      {"action":"selectAll", "properties":{
+        "role":{"id":"myPackage.RoleMapper.select", "prefix":"role__"},
+      }}
     </select>
     <select id="count" resultType="int">
-        flying:count
+        {"action":"count"}
     </select>
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        flying:insert
+        {"action":"insert"}
     </insert>
     <update id="update">
-        flying:update
+        {"action":"update"}
     </update>
     <update id="updatePersistent">
-        flying:updatePersistent
+        {"action":"updatePersistent"}
     </update>
     <delete id="delete">
-        flying:delete
+        {"action":"delete"}
     </delete>
     <resultMap id="result" type="Account" autoMapping="true">
         <id property="id" column="account_id" />
-        <association property="role" javaType="Role" select="myPackage.RoleMapper.select" column="fk_role_id" />
+        <association property="role" resultMap="myPackage.RoleMapper.result" columnPrefix="role__" />
     </resultMap>
 </mapper>
 ```
+上述内容中 json 中的 `properties` 中的 `"prefix"` 要和 `resultMap` 中的 `association` 中的 `"columnPrefix"` 保持一致，这样才能借助 mybatis 对外键关联表内容进行正确解析。json 中的 `properties` 中的 `"id"` 指向了另一个方法（注意这里使用了 mybatis 内部 id 机制），说明它调用这个方法的 json 来处理此 property。这样一来我们就可以把所有有关的 resultMap 用 json 联系起来。
+
 在写完以上代码后，我们看看 flying 能做到什么。首先多对一关系中的<b>一</b>（也即父对象），是可以在多对一关系中的<b>多</b>（也即子对象）查询时自动查询的。为了说明接下来的例子，我们先以 dataset 的方式定义一个数据集
 ```xml
 <dataset>
@@ -419,16 +462,24 @@ accountService.updatePersistent(newAccount);
 /*现在 newAccount.getRole()为 null，在数据库中也不再有关联（注意在这里 update 方法起不到这种效果，因为 update 会忽略 null）*/
 ```
 
-## [复杂外键关系](@复杂外键关系)
-自 `0.9.7` 开始支持复杂的外键关系，实现方式为在注解 [@FieldMapperAnnotation](https://gitee.com/limeng32/mybatis.flying/blob/master/src/main/java/indi/mybatis/flying/annotations/FieldMapperAnnotation.java) 中加入 [类型为 @ForeignAssociation[] 的新属性 associationExtra()](https://gitee.com/limeng32/mybatis.flying/blob/master/src/main/java/indi/mybatis/flying/annotations/ForeignAssociation.java)，例如为实现 ‘a left join b on (a.f_id = b.id and a.name_a = b.name_b and a.version_a >= b.version_b and ...)’，您可以使用如下代码：
+最后，json 中的关联关系可以忽略，例如
+```
+<select id="selectWithoutRole" resultMap="result">
+  {"action":"select#{?}", "properties":{}}
+</select>
+```
+这样一个方法在查询时就不会自动加载 role 属性。
+
+## [复杂外键关系](#复杂外键关系)
+自 `0.9.9` 开始支持复杂的外键关系，实现方式为在注解 [@FieldMapperAnnotation](https://gitee.com/limeng32/mybatis.flying/blob/master/src/main/java/indi/mybatis/flying/annotations/FieldMapperAnnotation.java) 中加入 [类型为 @ForeignAssociation[] 的新属性 associationExtra()](https://gitee.com/limeng32/mybatis.flying/blob/master/src/main/java/indi/mybatis/flying/annotations/ForeignAssociation.java)，例如为实现 ‘a left join b on (a.f_id = b.id and a.name_a = b.name_b and a.version_a >= b.version_b and ...)’，您可以使用如下代码：
 
 ```java
 @FieldMapperAnnotation(dbFieldName = "f_id", jdbcType = JdbcType.Integer, dbAssociationUniqueKey = "id", associationExtra = {
-			@ForeignAssociation(dbFieldName = "name_a", dbAssociationFieldName = "name_b"), 
+			@ForeignAssociation(dbFieldName = "name_a", dbAssociationFieldName = "name_b"),
 			@ForeignAssociation(dbFieldName = "version_a", dbAssociationFieldName = "version_b" ,condition=AssociationCondition.GreaterOrEqual) })
 ```
 
-同时自 `0.9.7` 起在默认左外连接的基础上，增加了右外连接，实现方式为在注解 [@FieldMapperAnnotation](https://gitee.com/limeng32/mybatis.flying/blob/master/src/main/java/indi/mybatis/flying/annotations/FieldMapperAnnotation.java) 中加入 [新属性 associationType()](https://gitee.com/limeng32/mybatis.flying/blob/master/src/main/java/indi/mybatis/flying/statics/AssociationType.java)，例如为实现一个右外连接您可以使用如下代码：
+同时自 `0.9.9` 起在默认左外连接的基础上，增加了右外连接，实现方式为在注解 [@FieldMapperAnnotation](https://gitee.com/limeng32/mybatis.flying/blob/master/src/main/java/indi/mybatis/flying/annotations/FieldMapperAnnotation.java) 中加入 [新属性 associationType()](https://gitee.com/limeng32/mybatis.flying/blob/master/src/main/java/indi/mybatis/flying/statics/AssociationType.java)，例如为实现一个右外连接您可以使用如下代码：
 
 ```java
 @FieldMapperAnnotation(dbFieldName = "f_id", jdbcType = JdbcType.Integer, dbAssociationUniqueKey = "id", associationType = AssociationType.RightJoin)
@@ -449,37 +500,37 @@ public class AccountCondition extends Account implements Conditionable {
     @ConditionMapperAnnotation(dbFieldName = "name", conditionType = ConditionType.Like)
     /*用作 name 全匹配的值*/
     private String nameLike;
-	
+
     @ConditionMapperAnnotation(dbFieldName = "address", conditionType = ConditionType.HeadLike)
     /*用作 address 开头匹配的值*/
     private String addressHeadLike;
-	
+
     @ConditionMapperAnnotation(dbFieldName = "address", conditionType = ConditionType.TailLike)
     /*用作 address 结尾匹配的值*/
     private String addressTailLike;
-	
+
     @ConditionMapperAnnotation(dbFieldName = "address", conditionType = ConditionType.MultiLikeAND)
     /*用作 address 需要同时匹配的若干个值的集合（类型只能为List）*/
     private List<String> addressMultiLikeAND;
-	
+
     @ConditionMapperAnnotation(dbFieldName = "address", conditionType = ConditionType.MultiLikeOR)
-    /*用作 address*/ 需要至少匹配之一的若干个值的集合（类型只能为List）
+    /*用作 address 需要至少匹配之一的若干个值的集合（类型只能为List）*/
     private List<String> addressMultiLikeOR;
-	
+
     @ConditionMapperAnnotation(dbFieldName = "address", conditionType = ConditionType.In)
-    /*用作 address*/ 可能等于的若干个值的集合（类型可为任意Collection）
-    private Collection<String> addressIn;
-	
+    /*用作 address 可能等于的若干个值的集合（类型只能为List）*/
+    private List<String> addressIn;
+
     @ConditionMapperAnnotation(dbFieldName = "address", conditionType = ConditionType.NotIn)
-    /*用作 address 不可能等于的若干个值的集合（类型可为任意Collection）*/
-    private Collection<String> addressNotIn;
-	
+    /*用作 address 不可能等于的若干个值的集合（类型只能为List）*/
+    private List<String> addressNotIn;
+
     @ConditionMapperAnnotation(dbFieldName = "address", conditionType = ConditionType.NullOrNot)
     /*用作 address 是否为 null 的判断（类型只能为Boolean）*/
     private Boolean addressIsNull;
-	
+
     /*相关的getter和setter方法请自行补充*/
-	
+
     /*以下四个方法是实现 Conditionable 接口后必须要定义的方法，我们这里只写出默认实现，在下一节中我们会详细介绍它们*/
     @Override
     public Limitable getLimiter() {
@@ -677,8 +728,8 @@ delete from account where id = '${id}' and opLock = '${opLock}'
 ```java
 @Or({
   @ConditionMapperAnnotation(dbFieldName = "name", conditionType = ConditionType.HeadLike),
-  @ConditionMapperAnnotation(dbFieldName = "age", conditionType = ConditionType.Equal), 
-  @ConditionMapperAnnotation(dbFieldName = "name", conditionType = ConditionType.HeadLike) 
+  @ConditionMapperAnnotation(dbFieldName = "age", conditionType = ConditionType.Equal),
+  @ConditionMapperAnnotation(dbFieldName = "name", conditionType = ConditionType.HeadLike)
 })
 ```
 （上面是实现 name like 'XXX%' or age = 'YYY' or name like 'ZZZ%' 查询的条件）
@@ -687,8 +738,8 @@ delete from account where id = '${id}' and opLock = '${opLock}'
 ```java
 @Or({
   @ConditionMapperAnnotation(dbFieldName = "name", conditionType = ConditionType.HeadLike),
-  @ConditionMapperAnnotation(dbFieldName = "age", conditionType = ConditionType.Equal), 
-  @ConditionMapperAnnotation(dbFieldName = "name", conditionType = ConditionType.HeadLike) 
+  @ConditionMapperAnnotation(dbFieldName = "age", conditionType = ConditionType.Equal),
+  @ConditionMapperAnnotation(dbFieldName = "name", conditionType = ConditionType.HeadLike)
 })
 private Object[] condition1;
 
@@ -713,7 +764,7 @@ personCondition.setCondition1("张", 27, "李");
 ### [外键或逻辑查询](#外键或逻辑查询)
 flying 在同库跨表查询时也可以做不同表上条件的或逻辑查询，比如我们要实现 person.name = 'XXX' or role.name = 'YYY' 查询，其中 role 是 person 业务上的父对象。我们可以在 role 的条件类中加入如下变量：
 ```java
-@Or({ 
+@Or({
   @ConditionMapperAnnotation(dbFieldName = "name", conditionType = ConditionType.Equal),
   @ConditionMapperAnnotation(dbFieldName = "name", conditionType = ConditionType.Equal, subTarget = mypackage.Person.class) })
 private Object[] roleNameEqualsOrPersonNameEquals;
@@ -829,7 +880,7 @@ flying 对部分常用的 JPA 标签进行了兼容，具体内容为：
 - `@FieldMapperAnnotation` 和 `TableMapperAnnotation` 其次。
 - `@Column` 和 `@Table` 再次。
 
-关于使用 JPA 的更多内容您可以参考这个[示例](https://github.com/limeng32/flying-demo2/tree/use-flying-0.9.4)。
+关于使用 JPA 的更多内容您可以参考这个[示例](https://gitee.com/limeng32/flying-demo-use-springboot)。
 ## [附录](#附录)
 <a id="FAQ"></a>
 ### [常见问题](#常见问题)
@@ -837,13 +888,9 @@ flying 对部分常用的 JPA 标签进行了兼容，具体内容为：
 1、为何<i>pojo_mapper</i>.xml 中没有 sql 语句细节？
 A：flying 的 sql 语句是动态生成的，只要您指定了正确的字段名，就绝对不会出现 sql 书写上的问题。并且 flying 采用了缓存机制，您无需担心动态生成 sql 的效率问题。
 
-<a id="association-or-typeHandler"></a>
-2、在单数据源中是否可以使用 flying#{?}(smartDataSource:dataBaseName):select 方式调用？
-A：无论是单数据源还是多数据源，只要您指定的 dataBaseName 正确，flying 查询就能正常工作。并且它能自动判断当前是否需要跨数据源，当需要跨源且您指定的 smartDataSource 正确时，就能成功跨源查询。整个过程完全自动，所以您可以放心地在任何情况下都使用这种查询。
-
 <a id="AccountTableCreater"></a>
 ### [代码示例](#代码示例)
-为了您更方便的使用 flying 进行开发，我们提供了一个[覆盖了本文大部分功能的代码示例](https://github.com/limeng32/flying-demo2/tree/use-flying-0.9.4)。
+为了您更方便的使用 flying 进行开发，我们提供了一个[覆盖了本文大部分功能的代码示例](https://gitee.com/limeng32/flying-demo-use-springboot)。
 ### [account 表建表语句](#account-表建表语句)
 ```sql
 CREATE TABLE account (
@@ -891,12 +938,12 @@ public class AccountService implements AccountMapper {
 	public Account selectOne(Account t) {
 		return mapper.selectOne(t);
 	}
-	
+
 	@Override
 	public Collection<Account> selectAll(Account t) {
 		return mapper.selectAll(t);
 	}
-	
+
 	@Override
 	public void insert(Account t) {
 		mapper.insert(t);
