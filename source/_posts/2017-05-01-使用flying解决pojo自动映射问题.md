@@ -145,7 +145,7 @@ Account account = accountService.selectOne(accountCondition);
 
 本文为描述方便，大部分方法名（即方法配置中的 id）与其操作类型（即 json 中的 "action"）相同，实际上方法名可以任意取，当您打算在同一个 <i>pojo_mapper</i>.xml 中定义多个操作类型相同的方法时就会发现这一点。如果您有更多操作类型的想法请告诉我们。
 
-"ignore" 参数内容是黑名单标记，更多的内容请见 [本文 ignore tag 部分。](#ignore-tag) "whiteList" 参数内容是白名单标记，更多的内容请见 [本文 white list tag 部分。](#white-list-tag)
+"ignore" 参数内容是黑名单标记，更多的内容请见 [本文 ignore tag 部分。](#ignore-tag) "whiteList" 参数内容是白名单标记，更多的内容请见 [本文 whiteList tag 部分。](#whiteList-tag)
 
 "index" 参数内容为指定索引语句，更多内容请见后。
 
@@ -270,7 +270,7 @@ Account account = accountService.selectOne(condition);
 由此可见 selectOne 可以称作是 selectAll 的特殊形式，它只会返回一个 pojo 而不是 pojo 的集合。如果真的有多条数据符合给定的 codition ，也只会返回查询结果中排在最前面的数据。尽管如此，在合适的地方使用 selectOne 代替 selectAll，会让您的程序获得极大方便。
 
 ## [foreign key](#foreign-key)
-一般来说我们的 pojo 都是业务相关的，而这些相关性归纳起来无外乎一对一、一对多和多对多。其中一对一是一对多的特殊形式，多对多本质上是由两个一对多组成，所以我们只需要着重解决一对多关系，而 flying 就是为此而生的。
+一般来说我们的 pojo 都是业务相关的，而这些相关性归纳起来无外乎一对一、一对多和多对多。其中一对一是一对多的特殊形式，多对多本质上是由两个一对多组成，所以我们只需要着重解决一对多关系就可以，而 flying 就是为此而生的。
 
 首先我们定义一个新的 pojo：角色（role）。角色和账户是一对多关系，即一个账户只能拥有一个角色，一个角色可以被多个账户拥有。为此我们要新建 [一个有代表性的 role 表](#RoleTableCreater)、`role.xml`、`RoleMapper.java` 以及 `Role.java`。`role.xml` 如下：
 ```xml
@@ -399,7 +399,7 @@ private Role role;
     </resultMap>
 </mapper>
 ```
-上述内容中 json 中的 `properties` 中的 `"prefix"` 要和 `resultMap` 中的 `association` 中的 `"columnPrefix"` 保持一致，这样才能借助 mybatis 对外键关联表内容进行正确解析。json 中的 `properties` 中的 `"id"` 指向了另一个方法（注意这里使用了 mybatis 内部 id 机制），说明它调用这个方法的 json 来处理此 property。这样一来我们就可以把所有有关的 resultMap 用 json 联系起来。
+上述内容中 json 中的 `properties` 中的 `"prefix"` 要和 `resultMap` 中的 `association` 中的 `"columnPrefix"` 保持一致，这样才能借助 mybatis 对外键关联表内容进行正确解析（这里前缀值 "role__" 可以换成用户自定义的任意值）。json 中的 `properties` 中的 `"id"` 指向了另一个方法（注意这里使用了 mybatis 内部 id 机制），说明它调用这个方法的 json 来处理此 property。这样一来我们就可以把所有有关的 resultMap 用 json 关联起来。
 
 在写完以上代码后，我们看看 flying 能做到什么。首先多对一关系中的<b>一</b>（也即父对象），是可以在多对一关系中的<b>多</b>（也即子对象）查询时自动查询的。为了说明接下来的例子，我们先以 dataset 的方式定义一个数据集
 ```xml
@@ -436,7 +436,7 @@ Collection<Account> accounts2 = accountService.selectAll(accountCondition);
 ```
 这个特性在 selectOne、count 中同样存在
 
-最后，父对象同样可以参与子对象的 insert、update、updatePersistent，代码如下：
+然后，父对象同样可以参与子对象的 insert、update、updatePersistent，代码如下：
 ```java
 Account newAccount = new Account();
 
@@ -462,13 +462,13 @@ accountService.updatePersistent(newAccount);
 /*现在 newAccount.getRole()为 null，在数据库中也不再有关联（注意在这里 update 方法起不到这种效果，因为 update 会忽略 null）*/
 ```
 
-最后，json 中的关联关系可以忽略，例如
+最后，json 中的关联关系可以被故意忽略，例如查询方法的 "properties" 中不写 "role" 的话：
 ```
 <select id="selectWithoutRole" resultMap="result">
   {"action":"select#{?}", "properties":{}}
 </select>
 ```
-这样一个方法在查询时就不会自动加载 role 属性。
+这个方法在执行时就不会自动加载 role 属性。
 
 ## [复杂外键关系](#复杂外键关系)
 自 `0.9.9` 开始支持复杂的外键关系，实现方式为在注解 [@FieldMapperAnnotation](https://gitee.com/limeng32/mybatis.flying/blob/master/src/main/java/indi/mybatis/flying/annotations/FieldMapperAnnotation.java) 中加入 [类型为 @ForeignAssociation[] 的新属性 associationExtra()](https://gitee.com/limeng32/mybatis.flying/blob/master/src/main/java/indi/mybatis/flying/annotations/ForeignAssociation.java)，例如为实现 ‘a left join b on (a.f_id = b.id and a.name_a = b.name_b and a.version_a >= b.version_b and ...)’，您可以使用如下代码：
@@ -800,10 +800,10 @@ Person<Collection> persons = personService.selectAll(p);
 private String password;
 /*相关的getter和setter方法请自行补充*/
 ```
-这样我们将 `password` 这个字段加上了一个忽略标记 `noPassword`，然后在查询 account 表时相关 flying 特征值最后加上 `:noPassword` 就不会再查找 password 字段，但作为查询条件和更新数据时 password 字段都可以参与进来，如下所示：
+这样我们将 `password` 这个字段加上了一个忽略标记 `noPassword`，然后在查询 account 表时相关 flying-json 属性 `"ignore"` 加上 `noPassword` 就不会再查找 password 字段，但作为查询条件和更新数据时 password 字段都可以参与进来，如下所示：
 ```xml
 <select id="selectOne" resultMap="result">
-    flying:selectOne:noPassword
+    {"action":"selectAll", "ignore":"noPassword"}
 </select>
 ```
 然后，可通过代码验证 `password` 属性已被忽略
@@ -826,27 +826,69 @@ accountService.update(account);
 private String detail;
 /*相关的getter和setter方法请自行补充*/
 ```
-此时用 flying 特征值为 `flying#{?}:select:noDetail` 的方法就不会查出 `detail` 字段；如果我们在某些情况又需要得到 `detail` 的内容，再增加一个特征值不带 `:noDetail` 的查询方法即可，例如直接用 `flying#{?}:select`。
+此时用 flying-json 特征值为 `{"action":"select#{?}", "ignore":"noDetail"}` 的方法就不会查出 `detail` 字段。
 
 如果我们想既不查询 `detail` 又不查询 `password`，可在 `password` 的注解上使用多个忽略标记，就像下面这样：
 ```java
 @FieldMapperAnnotation(dbFieldName = "password", jdbcType = JdbcType.VARCHAR, ignoreTag = { "noPassword", "noDetail" })
 private String password;
 ```
-这时特征值 `flying#{?}:select:noDetail` 就既忽略 `detail` 又忽略 `password`。
-由此可见，在实体类中一个属性可配置多个忽略标记，其中一个被激活这个属性就不会参与查询；但是 flying 特征值每次只能激活一个忽略标记，所以如果您有多样化的忽略需求，您需要在实体类中仔细配置以满足需要。
+这时特征值 `{"action":"select#{?}", "ignore":"noDetail"}` 就既忽略 `detail` 又忽略 `password`。
+由此可见，在实体类中一个属性可配置多个忽略标记，其中一个被激活这个属性就不会参与查询；但是 flying-json 每次只能激活一个忽略标记，所以如果您有多样化的忽略需求，您需要在实体类中仔细配置以满足需要。
 
-最后，flying 特征值中的忽略标记没有传递性，只对当前查询对象有效而对自动查询的父对象无效。例如对 `Account` 对象的 `flying#{?}:select:noPassword` 查询，其忽略标记对自动查询的父对象 `Role` 无效，哪怕 `Role` 中有 `ignoreTag` 等于 'noPassword' 的属性也会查询出来。如果您需要激活自动查询的父对象中的忽略标记，您需要调整 `<resultMap>` 中的 `<association>` 的设置，让其指向一个激活了忽略标记的查询，例如：
+最后，flying 特征值中的忽略标记没有传递性，只对当前查询对象有效而对自动查询的父对象无效。例如对 `Account` 对象的忽略标记对自动查询的父对象 `Role` 无效，哪怕 `Role` 中有 `ignoreTag` 等于 Account 查询 json 中 `"ignore"` 的属性也会查询出来。如果您需要激活自动查询的父对象中的忽略标记，您需要调整 `"properties"` 中的属性中的 `"id"`，让其指向一个激活了忽略标记的查询，例如：
 ```xml
-<association property="role" javaType="Role" select="myPackage.RoleMapper.selectIgnore_" column="fk_role_id" />
+{"action":"select#{?}", "properties":{
+			"role":{"id":"myPackage.RoleMapper.selectWithIgnore", "prefix":"role__"},
+		}
+}
 ```
-如果您既需要带有激活忽略标记的自动查询父对象又需要不带激活忽略标记的自动查询父对象，那您为查询对象定义多个 `resultMap` 即可。
+如果您既需要带有忽略父对象参数的方法，又需要不忽略的方法，那您需要定义不同的方法。
 
 忽略标记在 insert、update、updatePersist 中同样会生效，具体作用是激活后新增、修改时忽略此字段，某些情况下您会发现这种需要。另外，如果此字段受到 JPA 标签 `@Column` 修饰并且 `insertable = false` 或 `updateable = false`，则不论此字段上的 ignoreTag 为何，在任何情况下此字段都被认为是新增忽略或修改忽略。
+
+对于关联对象型属性来说，在 flying-json 的 `"properties"` 中忽略这个属性和对这个属性使用 ignore 标签效果是一样的。
+
+### [whiteList tag](#whiteList-tag)
+
+如果说 ignore 机制是一种黑名单机制，那么 whiteList 机制就是白名单机制。例如有时候我们想精确控制查询结果中的字段，使用 whiteList 机制就比 ignore 机制更好。例如我们的 Account 中有 `password` 和 'salt'（加密盐值），两者都属于保密属性，在代码中就可以如下写：
+```java
+@FieldMapperAnnotation(dbFieldName = "password", jdbcType = JdbcType.VARCHAR, whiteListTag = { "secret" })
+private String password;
+
+@FieldMapperAnnotation(dbFieldName = "salt", jdbcType = JdbcType.VARCHAR, whiteListTag = { "secret" })
+private String salt;
+
+/*相关的getter和setter方法请自行补充*/
+```
+如果我们查询 account 表的 flying-json 中不含有 `"whiteList"` 属性，whiteListTag 不会起作用。如果 flying-json 属性 `"whiteList"` 有值就会<b>只查询相应白名单上的字段，其它字段都忽略</b>，例如：
+```xml
+<select id="selectOneOnlySecret" resultMap="result">
+    {"action":"selectOne", "whiteList":"secret"}
+</select>
+```
+然后，可通过代码验证 `password`、`salt` 之外的属性已被忽略
+```java
+/*查找 name 为 "user" 且 password 为 "123456" 的一个账户*/
+Account condition = new Account();
+condition.setName("user");
+condition.setPassword("123456");
+Account account = accountService.selectOneOnlySecret(condition);
+/*用以上方式是可以查出 passeord 为 "123456" 的账户的，然而结果中只有 account.getPassword() 和 account.getSalt() 不为 null*/
+```
+和 ignore 机制一样，您可以在代码中给属性配置多个白名单标记，但是 flying-json 每次只能激活一个白名单标记。
+
+如果您习惯了在每个查询 flying-json 上都加上 `"whiteList"`，您会发现这种机制更适合保护敏感字段。
+
+whiteList 机制和 ignore 机制可以同时生效，如同您的直觉一样，先处理白名单再处理黑名单。
 ### [复数外键](#复数外键)
 有时候一个数据实体会有多个多对一关系指向另一个数据实体，例如考虑下面的情况：我们假设每个账户都有一个兼职角色，这样 account 表中就需要另一个字段 fk_second_role_id，而这个字段也是指向 role 表。为了满足这个需要，首先我们要在 account.xml 的 resultMap元素中，加入以下内容：
 ```xml
-<association property="secondRole" javaType="Role" select="myPackage.RoleMapper.select" column="fk_second_role_id" />
+<association property="secondRole" resultMap="myPackage.RoleMapper.result" columnPrefix="secondRole__" />
+```
+在相关的 flying-json 中的 `"properties"` 中加入
+```
+"secondRole":{"id":"myPackage.RoleMapper.select", "prefix":"secondRole__"}
 ```
 然后在 Account.java 中还需要加入以下代码：
 ```java
@@ -880,7 +922,6 @@ flying 对部分常用的 JPA 标签进行了兼容，具体内容为：
 - `@FieldMapperAnnotation` 和 `TableMapperAnnotation` 其次。
 - `@Column` 和 `@Table` 再次。
 
-关于使用 JPA 的更多内容您可以参考这个[示例](https://gitee.com/limeng32/flying-demo-use-springboot)。
 ## [附录](#附录)
 <a id="FAQ"></a>
 ### [常见问题](#常见问题)
