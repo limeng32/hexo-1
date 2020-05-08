@@ -37,7 +37,7 @@ public interface AccountMapper {
     public Account selectOne(Account t);
 }
 ```
-到目前为止一切都和不使用 flying 时一模一样，您可能奇怪的地方是：account.xml 中的 select 和 selectOne 方法描述中的 json 是什么。这是这条查询的 flying 特征值描述，flying 将以往的 sql 语句抽离为 json 和执行对象，[在 flying 特征值描述部分会有解释。](#flying-特征值描述)马上我们就会在对象实体 Account 中看到更多不一样的地方，Account.java 的代码如下：
+到目前为止一切都和不使用 flying 时一模一样，您可能奇怪的地方是：account.xml 中的 select 和 selectOne 方法描述中的 json 是什么。这是这条查询的 flying-json，flying 将以往的 sql 语句抽离为 json 和执行对象，[在 flying-json 描述部分会有解释。](#flying-json-描述)马上我们就会在对象实体 Account 中看到更多不一样的地方，Account.java 的代码如下：
 ```java
 package myPackage;
 import org.apache.ibatis.type.JdbcType;
@@ -53,16 +53,16 @@ public class Account {
     private java.lang.String name;
 
     public Integer getId() {
-	    return id;
+      return id;
     }
     public void setId(Integer id) {
-		this.id = id;
+      this.id = id;
     }
     public String getName() {
-		return name;
+      return name;
     }
     public void setName(String name) {
-		this.name = name;
+      this.name = name;
     }
 }
 ```
@@ -80,22 +80,22 @@ public class Account {
 
 第3行 `@FieldMapperAnnotation` 与第二行相同，它描述了另一个字段 name，值得注意的是这个字段的类型是 varchar 并且不是主键。
 
-以上 3 个注解描述了表 account 的数据结构，然后我们就可以使用 AccountService 非常方便的操纵数据库的读取了。（AccountService 是 AccountMapper 的实现类，单独使用或在 spring 中使用都有多种方法进行配置，[本文档在附录部分提供了一种配置方法](#AccountService)）
+以上 3 个注解描述了表 account 的数据结构，然后我们就可以使用 AccountMapper 非常方便的操纵数据库的读取了。
 
 使用以下代码，可以查询 id 为 1 的账户：
 ```java
-Account account = accountService.select(1);
+Account account = accountMapper.select(1);
 ```
 使用以下代码，可以查询 name 为 andy 的 1 条账户数据：
 ```java
 Account accountCondition = new Account();
 accountCondition.setName("andy");
-Account account = accountService.selectOne(accountCondition);
+Account account = accountMapper.selectOne(accountCondition);
 ```
 与以往的方式相比，这种方式是不是变得优雅了很多？关于 select 和 selectOne 之间的区别，我们在后面的章节会讲到。
 
-## [flying 特征值描述](#flying-特征值描述)
-<i>pojo_mapper</i>.xml 中的 {"action":"select#{?}"} 即是 flying 的特征值描述，如果您想用 flying 管理一个数据库操作，就用这样一个 json 替代原本应该写的 sql 语句，它的格式使用 linux 风格描述如下（由 __ 开头和结尾的参数需由用户提供）：
+## [flying-json 描述](#flying-json-描述)
+<i>pojo_mapper</i>.xml 中的 {"action":"select#{?}"} 即是 flying 的特征描述，如果您想用 flying 管理一个数据库操作，就用这样一个 json 替代原本应该写的 sql 语句，它的格式使用 linux 风格描述如下（由 __ 开头和结尾的参数需由用户提供）：
 
 查询操作：
 ```xml
@@ -109,20 +109,26 @@ Account account = accountService.selectOne(accountCondition);
     ]
 }
 ```
-计数操作：
+查询数量操作：
 ```xml
 {
   "action":"count"[, "index":"__index__"]
 }
 ```
-修改、删除操作：
+修改操作：
 ```xml
 {
-  "action":"update|updatePersistent|delete"
+  "action":"update|updatePersistent"
     [, "ignore":"__ignore__"][, "whiteList":"__whiteList__"]
 }
 ```
-新增操作
+删除操作：
+```xml
+{
+  "action":"delete"
+}
+```
+新增操作：
 ```xml
 {
   "action":"insert|insertBatch"
@@ -133,7 +139,7 @@ Account account = accountService.selectOne(accountCondition);
 为避免特定情况下的缓存问题，当您使用 select 操作时需在它后面加上 #{?} 变成 select#{?}，当您使用其它类型操作时不需要这么做。
 
 "action" 参数是 flying 操作数据的方法，目前支持的方法有：
-`select`：按主键查询，并返回结果集中的对象；
+`select#{?}`：按主键查询，并返回结果集中的对象；
 `selectOne`：按条件对象查询，只返回结果集中的第一个对象；
 `selectAll`：按条件对象查询，返回结果集中所有对象组成的集合；
 `count`：按条件对象查询，返回结果数量；
@@ -141,7 +147,7 @@ Account account = accountService.selectOne(accountCondition);
 `updatePersistent`：按参数对象中的所有属性更新一条记录，以参数主键为准，此操作会把参数对象为 null 的属性在数据库中也更新为 [null]；
 `delete`：按参数对象删除记录，可按主键执行一条也可批量执行多条；
 `insert`：按参数对象增加一条记录，在 insert 之后可以以括号的方式指定主键生成方式（可选），内置有 uuid、无下横线的 uuid_no_line、按毫秒值 millisecond，也可完全自定义主键生成器类；
-`insertBatch`：按集合型参数对象增加多条记录，"keyGenerator" 同 `insert`；
+`insertBatch`：按集合型参数对象增加多条记录，"keyGenerator" 同 `insert`（`1.0.0` 版新增）；
 
 本文为描述方便，大部分方法名（即方法配置中的 id）与其操作类型（即 json 中的 "action"）相同，实际上方法名可以任意取，当您打算在同一个 <i>pojo_mapper</i>.xml 中定义多个操作类型相同的方法时就会发现这一点。如果您有更多操作类型的想法请告诉我们。
 
@@ -149,7 +155,7 @@ Account account = accountService.selectOne(accountCondition);
 
 "index" 参数内容为指定索引语句，更多内容请见后。
 
-"properties" 参数内容为外键关联表的查询情况，这里使用 <i>pojo_mapper</i>.xml 中的 resultMap 中的 association 中的 columnPrefix 方式，使得我们可在一次查询中获得外键关联表中所有需要的记录，是处理关联查询的最佳方式，更多内容请见后。
+"properties" 参数内容为外键关联表的查询情况，这里使用 <i>pojo_mapper</i>.xml 中的 resultMap 中的 association 中的 columnPrefix 机制，使得我们可在一次查询中获得外键关联表中所有需要的记录，这是处理关联查询的最佳方式，更多内容请见 [本文 foreign key 部分。](#foreign-key)。
 
 ## [insert & delete](#insert-amp-delete)
 在最基本的 select 之后，我们再看新增功能。但在此之前，需要先在 account.xml 中增加以下内容：
@@ -168,7 +174,7 @@ public void insert(Account t);
 ```java
 Account newAccount = new Account();
 newAccount.setName("bob");
-accountService.insert(newAccount);
+accountMapper.insert(newAccount);
 ```
 然后我们再看删除功能。先在 account.xml 中增加以下内容：
 ```xml
@@ -182,7 +188,7 @@ public int delete(Account t);
 ```
 然后使用以下代码，可以删掉 id 与 accountToDelete 的 id 一致的数据。
 ```java
-accountService.delete(accountToDelete);
+accountMapper.delete(accountToDelete);
 ```
 delete 方法的返回值代表执行 sql 后产生影响的条数，一般来说，返回值为 0 表示 sql 执行后没有效果，返回值为 1 表示 sql 执行成功，在代码中可以通过判断 delete 方法的返回值来实现更复杂的事务逻辑。
 
@@ -208,19 +214,19 @@ public int updatePersistent(Account t);
 然后使用以下代码，可以将 accountToUpdate 的 name 更新为 “duke” 。
 ```java
 accountToUpdate.setName("duke");
-accountService.update(accountToUpdate);
+accountMapper.update(accountToUpdate);
 ```
 update 和 updatePersistent 方法的返回值代表执行 sql 后产生影响的条数，一般来说，返回值为 0 表示 sql 执行后没有效果，返回值为 1 表示 sql 执行成功，在代码中可以通过判断 update 和 updatePersistent 方法的返回值来实现更复杂的事务逻辑。
 
 下面我们来说明 update 和 updatePersistent 和关系。如果我们执行
 ```java
 accountToUpdate.setName(null);
-accountService.update(accountToUpdate);
+accountMapper.update(accountToUpdate);
 ```
 实际上数据库中这条数据的 name 字段不会改变，因为 update 对值为 null 的属性有保护措施。这在大多数情况下都是合理的，但如果我们真的需要在数据库中将这条数据的 name 字段设为 null，updatePersistent 就派上了用场。我们可以执行：
 ```java
 accountToUpdate.setName(null);
-accountService.updatePersistent(accountToUpdate);
+accountMapper.updatePersistent(accountToUpdate);
 ```
 这样数据库中这条数据的 name 字段就会变为 null。可见 updatePersistent 会把 pojo 中所有的属性都更新到数据库中，而 update 只更新不为 null 的属性。在实际使用 updatePersistent 时，您需要特别小心慎重，因为当时 pojo 中为 null 的属性有可能比您想象的多。
 
@@ -251,8 +257,8 @@ public int count(Account t);
 ```java
 Account condition = new Account();
 condition.setAddress("beijing");
-Collection<Account> accountCollection = accountService.selectAll(condition);
-int accountNumber = accountService.count(condition);
+Collection<Account> accountCollection = accountMapper.selectAll(condition);
+int accountNumber = accountMapper.count(condition);
 ```
 （当然一般来说执行 selectAll 后就不需要执行 count 了，我们取结果集的 size() 即可，但如果我们只关心数量不关心具体数据集时，执行 count 比执行 selectAll 更节省时间）
 
@@ -261,11 +267,11 @@ int accountNumber = accountService.count(condition);
 Account condition = new Account();
 condition.setAddress("shanghai");
 condition.setName("ella");
-Collection<Account> accountCollection = accountService.selectAll(condition);
+Collection<Account> accountCollection = accountMapper.selectAll(condition);
 ```
 如果我们知道 address 为 "shanghai" 同时  name 为 "ella" 的账户只有一个，并想直接返回这个数据绑定的 pojo，可以执行： 
 ```java
-Account account = accountService.selectOne(condition);
+Account account = accountMapper.selectOne(condition);
 ```
 由此可见 selectOne 可以称作是 selectAll 的特殊形式，它只会返回一个 pojo 而不是 pojo 的集合。如果真的有多条数据符合给定的 codition ，也只会返回查询结果中排在最前面的数据。尽管如此，在合适的地方使用 selectOne 代替 selectAll，会让您的程序获得极大方便。
 
@@ -413,7 +419,7 @@ private Role role;
 ```
 我们使用这个数据集进行测试，当我们输入以下代码时：
 ```java
-Account account1 = accountService.select(1);
+Account account1 = accountMapper.select(1);
 /*此时account1的role属性也已经加载了真实数据*/
 Role role1 = account1.getRole();
 /*role1.getId()为10，role1.getRoleName()为"user"*/
@@ -426,12 +432,12 @@ Role roleCondition = new Role();
 roleCondition.setRoleName("super_user");
 Account accountCondition = new Account();
 accountCondition.setRole(roleCondition);
-Collection<Account> accounts = accountService.selectAll(accountCondition);
+Collection<Account> accounts = accountMapper.selectAll(accountCondition);
 /*accounts.seiz()为 2，里面包含的对象的 account_id 是 2 和 3*/
 
 /*我们再给入参pojo加一个address限制*/
 accountCondition.setAddress("beijing");
-Collection<Account> accounts2 = accountService.selectAll(accountCondition);
+Collection<Account> accounts2 = accountMapper.selectAll(accountCondition);
 /*accounts.size()为 1，里面包含的对象的 account_id 是 3，这说明 account 的条件和父对象 role 的条件同时生效*/
 ```
 这个特性在 selectOne、count 中同样存在
@@ -444,21 +450,21 @@ Account newAccount = new Account();
 newAccount.setName("iris");
 
 /*角色名称为 "user" 的数据的 role_id 是 10，由变量 role1 来加载它*/
-Role role1 = roleService.select(10);
+Role role1 = roleMapper.select(10);
 newAccount.setRole(role1);
-accountService.insert(newAccount);
+accountMapper.insert(newAccount);
 /*一个姓名为iris，角色名称为"user"的账号建立完成*/
 
 /*我们用update方法将iris的角色变为"super_user"*/
 /*角色名称为"super_user"的数据的role_id是11，由变量role2来加载了它*/
-Role role2 = roleService.select(11);
+Role role2 = roleMapper.select(11);
 newAccount.setRole(role2);
-accountService.update(newAccount);
+accountMapper.update(newAccount);
 /*现在newAccount.getRole().getId()为11，newAccount.getRole().getRoleName为"super_user"*/
 
 /*我们用updatePersistent方法将iris的角色变为null，即与Role对象不再关联*/
 newAccount.setRole(null);
-accountService.updatePersistent(newAccount);
+accountMapper.updatePersistent(newAccount);
 /*现在 newAccount.getRole()为 null，在数据库中也不再有关联（注意在这里 update 方法起不到这种效果，因为 update 会忽略 null）*/
 ```
 
@@ -553,17 +559,17 @@ public class AccountCondition extends Account implements Conditionable {
 /*查询名称中带有"a"的帐户数量*/
 AccountCondition condition1 = new AccountCondition();
 condition1.setNameLike("a");
-int count1 = accountService.count(condition1);
+int count1 = accountMapper.count(condition1);
 
 /*查询地址以"bei"开头的帐户的数量*/
 AccountCondition condition2 = new AccountCondition();
 condition2.setAddressHeadLike("bei");
-int count2 = accountService.count(condition2);
+int count2 = accountMapper.count(condition2);
 
 /*查询地址以"jing"结尾的帐户的数量*/
 AccountCondition condition3 = new AccountCondition();
 condition3.setAddressTailLike("jing");
-int count3 = accountService.count(condition3);
+int count3 = accountMapper.count(condition3);
 
 /*查询地址同时包含"e"和"i"的账户的数量*/
 List<String> listAddressMultiLikeAND = new ArrayList<>();
@@ -571,7 +577,7 @@ listAddressMultiLikeAND.add("e");
 listAddressMultiLikeAND.add("i");
 AccountCondition condition4 = new AccountCondition();
 condition4.setAddressMultiLikeAND(listAddressMultiLikeAND);
-int count4 = accountService.count(condition4);
+int count4 = accountMapper.count(condition4);
 
 /*查询地址至少包含"e"或"i"的账户的数量*/
 List<String> listAddressMultiLikeOR = new ArrayList<>();
@@ -579,7 +585,7 @@ listAddressMultiLikeOR.add("e");
 listAddressMultiLikeOR.add("i");
 AccountCondition condition5 = new AccountCondition();
 condition5.setAddressMultiLikeOR(listAddressMultiLikeOR);
-int count5 = accountService.count(condition5);
+int count5 = accountMapper.count(condition5);
 
 /*查询地址等于"beijing"或"shanghai"中的一个的账户的数量*/
 List<String> listAddressIn = new ArrayList<>();
@@ -587,7 +593,7 @@ listAddressIn.add("beijing");
 listAddressIn.add("shanghai");
 AccountCondition condition6 = new AccountCondition();
 condition6.setAddressIn(listAddressIn);
-int count6 = accountService.count(condition6);
+int count6 = accountMapper.count(condition6);
 
 /*查询地址不等于"beijing"或"shanghai"的账户的数量*/
 List<String> listAddressNotIn = new ArrayList<>();
@@ -595,18 +601,18 @@ listAddressNotIn.add("beijing");
 listAddressNotIn.add("shanghai");
 AccountCondition condition7 = new AccountCondition();
 condition7.setAddressNotIn(listAddressNotIn);
-int count7 = accountService.count(condition7);
+int count7 = accountMapper.count(condition7);
 
 /*查询地址为null的账户的数量*/
 AccountCondition condition8 = new AccountCondition();
 condition8.setAddressIsNull(true);
-int count8 = accountService.count(condition8);
+int count8 = accountMapper.count(condition8);
 
 /*最后我们查询名称中带有"a"且地址为"beijing"的帐户的数量*/
 AccountCondition conditionX = new AccountCondition();
 conditionX.setNameLike("a");
 conditionX.setAddress("beijing");
-int countX = accountService.count(conditionX);
+int countX = accountMapper.count(conditionX);
 /*这个用例说明条件变量也可以使用 pojo 本身的字段进行查询*/
 ```
 ## [limiter & sorter](#limiter-amp-sorter)
@@ -653,32 +659,32 @@ import indi.mybatis.flying.pagination.SortParam;
 AccountCondition condition1 = new AccountCondition();
 /*PageParam 的构造函数中第一个参数为起始页数，第二个参数为每页容量，new PageParam(0,10)即从头开始取 10 条数据*/
 condition1.setLimiter(new PageParam(0, 10));
-Collection<Account> collection1 = accountService.selectAll(codition1);
+Collection<Account> collection1 = accountMapper.selectAll(codition1);
 
 /*查询 account 表在默认排序下第 8 条数据*/
 AccountCondition condition2 = new AccountCondition();
 /*new PageParam(7,1)即从第 7 条开始取 1 条数据*/
 condition2.setLimiter(new PageParam(7, 1));
 /*因为结果只需要一条数据，我们可以使用 selectOne 方法*/
-Account account2 = accountService.selectOne(condition2);
+Account account2 = accountMapper.selectOne(condition2);
 
 /*查询 account 表在 name 正序排序下的所有数据*/
 AccountCondition condition3 = new AccountCondition();
 /*new Order()的第一个参数是被排序的字段名，第二个参数是正序或倒序*/
 condition3.setSorter(new SortParam(new Order("name", Conditionable.Sequence.asc)));
-Collection<Account> collection3 = accountService.selectAll(codition3);
+Collection<Account> collection3 = accountMapper.selectAll(codition3);
 
 /*查询 account 表先在 name 正序排序，然后在 address 倒序排序下的所有数据*/
 AccountCondition condition4 = new AccountCondition();
 /*在new SortParam()中可以接受不定数量的 Order 参数，因此我们先新建一个 name 正序，再新建一个 address 倒序*/
 condition4.setSorter(new SortParam(new Order("name", Conditionable.Sequence.asc),new Order("address", Conditionable.Sequence.desc)));
-Collection<Account> collection4 = accountService.selectAll(codition4);
+Collection<Account> collection4 = accountMapper.selectAll(codition4);
 
 /*最后我们查询在 name 正序排序下的第 11 到 20 条数据*/
 AccountCondition conditionX = new AccountCondition();
 conditionX.setSorter(new SortParam(new Order("name", Conditionable.Sequence.asc)));
 conditionX.setLimiter(new PageParam(1, 10));
-Collection<Account> collectionX = accountService.selectAll(coditionX);
+Collection<Account> collectionX = accountMapper.selectAll(coditionX);
 /*这个用例说明 limiter 和 sorter 是可以组合使用的*/
 ```
 因为 limiter 和 sorter 也是以条件对象的方式定义，所以可以和复杂查询一起使用，只要在条件对象中既包含条件标注又包含 Limitable 和 Sortable 类型的变量即可。
@@ -689,7 +695,7 @@ import indi.mybatis.flying.pagination.Page;
 
 AccountCondition condition = new AccountCondition();
 condition.setLimiter(new PageParam(0, 10));
-Collection<Account> collection = accountService.selectAll(condition);
+Collection<Account> collection = accountMapper.selectAll(condition);
 
 /*下面这句代码就将查询结果封装为了 Page<?> 对象*/
 Page<Account> page = new Page<>(collection, condition.getLimiter());
@@ -786,7 +792,7 @@ RoleConditon rc = new RoleCondition();
 rc.setRoleNameEqualsOrPersonNameEquals("wfadmin","张三");
 Person p = new Person();
 p.setRole(rc);
-Person<Collection> persons = personService.selectAll(p);
+Person<Collection> persons = personMapper.selectAll(p);
 ```
 无论 role 是 person 业务上的直接父对象还是间接父对象都可以这样查询。
 
@@ -812,12 +818,12 @@ private String password;
 Account condition = new Account();
 condition.setName("user");
 condition.setPassword("123456");
-Account account = accountService.selectOne(condition);
+Account account = accountMapper.selectOne(condition);
 /*用以上方式是可以查出 passeord 为 "123456" 的账户的，然而结果中 account.getPassword()为 null*/
 
 /* 但是仍然可以更新 password 的值 */
 account.setPassword("654321");
-accountService.update(account);
+accountMapper.update(account);
 /*现在 account 对应的数据库中数据的 password 字段值变为 "654321"*/
 ```
 另一种场景是查询对象中有一个长度很大的属性，例如我们在数据库中有一个类型为 varchar 长度为 3000 的属性 `detail`，为性能考虑，在不需要查看 `detail` 详情的情况下我们不想将其 select 出来，而忽略标记就可以做到这一点。我们在 account.java 中增加如下代码：
@@ -826,17 +832,17 @@ accountService.update(account);
 private String detail;
 /*相关的getter和setter方法请自行补充*/
 ```
-此时用 flying-json 特征值为 `{"action":"select#{?}", "ignore":"noDetail"}` 的方法就不会查出 `detail` 字段。
+此时用 flying-json 为 `{"action":"select#{?}", "ignore":"noDetail"}` 的方法就不会查出 `detail` 字段。
 
 如果我们想既不查询 `detail` 又不查询 `password`，可在 `password` 的注解上使用多个忽略标记，就像下面这样：
 ```java
 @FieldMapperAnnotation(dbFieldName = "password", jdbcType = JdbcType.VARCHAR, ignoreTag = { "noPassword", "noDetail" })
 private String password;
 ```
-这时特征值 `{"action":"select#{?}", "ignore":"noDetail"}` 就既忽略 `detail` 又忽略 `password`。
+这时 flying-json `{"action":"select#{?}", "ignore":"noDetail"}` 就既忽略 `detail` 又忽略 `password`。
 由此可见，在实体类中一个属性可配置多个忽略标记，其中一个被激活这个属性就不会参与查询；但是 flying-json 每次只能激活一个忽略标记，所以如果您有多样化的忽略需求，您需要在实体类中仔细配置以满足需要。
 
-最后，flying 特征值中的忽略标记没有传递性，只对当前查询对象有效而对自动查询的父对象无效。例如对 `Account` 对象的忽略标记对自动查询的父对象 `Role` 无效，哪怕 `Role` 中有 `ignoreTag` 等于 Account 查询 json 中 `"ignore"` 的属性也会查询出来。如果您需要激活自动查询的父对象中的忽略标记，您需要调整 `"properties"` 中的属性中的 `"id"`，让其指向一个激活了忽略标记的查询，例如：
+最后，flyin-json 中的忽略标记没有传递性，只对当前查询对象有效而对自动查询的父对象无效。例如对 `Account` 对象的忽略标记对自动查询的父对象 `Role` 无效，哪怕 `Role` 中有 `ignoreTag` 等于 Account 查询 json 中 `"ignore"` 的属性也会查询出来。如果您需要激活自动查询的父对象中的忽略标记，您需要调整 `"properties"` 中的属性中的 `"id"`，让其指向一个激活了忽略标记的查询，例如：
 ```xml
 {"action":"select#{?}", "properties":{
 			"role":{"id":"myPackage.RoleMapper.selectWithIgnore", "prefix":"role__"},
@@ -873,7 +879,7 @@ private String salt;
 Account condition = new Account();
 condition.setName("user");
 condition.setPassword("123456");
-Account account = accountService.selectOneOnlySecret(condition);
+Account account = accountMapper.selectOneOnlySecret(condition);
 /*用以上方式是可以查出 passeord 为 "123456" 的账户的，然而结果中只有 account.getPassword() 和 account.getSalt() 不为 null*/
 ```
 和 ignore 机制一样，您可以在代码中给属性配置多个白名单标记，但是 flying-json 每次只能激活一个白名单标记。
@@ -905,7 +911,7 @@ role.setName("user");
 condition.setRole(role);
 secondRole.setName("super_user");
 condition.setSecondRole(secondRole);
-Collection<Account> accounts = accountService.selectAll(condition);
+Collection<Account> accounts = accountMapper.selectAll(condition);
 ```
 可见，复数外键的增删改查等操作与普通外键是类似的，只需要注意虽然 secondRole 的类型为Role，但它的 getter、setter 是 getSecondRole()、setSecondRole()，而不是 getRole()、setRole()即可。
 
@@ -952,62 +958,4 @@ CREATE TABLE role (
   role_name varchar(30) DEFAULT NULL,
   PRIMARY KEY (role_id)
 )
-```
-
-<a id="AccountService"></a>
-### [AccountService 的实现方式](#AccountService-的实现方式)
-在 spring 3.x 及更高版本中，可以按以下方式构建一个 <i>pojoService</i>.java 类：
-```java
-package myPackage;
-
-import java.util.Collection;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-@Service
-public class AccountService implements AccountMapper {
-
-	@Autowired
-	private AccountMapper mapper;
-
-	@Override
-	public Account select(Object id) {
-		return mapper.select(id);
-	}
-
-	@Override
-	public Account selectOne(Account t) {
-		return mapper.selectOne(t);
-	}
-
-	@Override
-	public Collection<Account> selectAll(Account t) {
-		return mapper.selectAll(t);
-	}
-
-	@Override
-	public void insert(Account t) {
-		mapper.insert(t);
-	}
-
-	@Override
-	public int update(Account t) {
-		return mapper.update(t);
-	}
-
-	@Override
-	public int updatePersistent(Account t) {
-		return mapper.updatePersistent(t);
-	}
-
-	@Override
-	public int delete(Account t) {
-		return mapper.delete(t);
-	}
-
-	@Override
-	public int count(Account t) {
-		return mapper.count(t);
-	}
-}
 ```
