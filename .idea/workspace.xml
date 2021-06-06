@@ -2,106 +2,29 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c58cbdbd-54f8-4094-b94d-8822e2852952" name="Default" comment="New changelist">
-      <change type="DELETED" beforePath="E:\node\hexo\source\_posts\2017-04-01-使用flying完善Mybatis自带的二级缓存.md" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/themes/jacman" afterPath="$PROJECT_DIR$/themes/jacman" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/source/_posts/2017-03-01-flying的发展方向.md" afterPath="$PROJECT_DIR$/source/_posts/2017-03-01-flying的发展方向.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/source/_posts/2017-04-15-flying 最新版本新增特性.md" afterPath="$PROJECT_DIR$/source/_posts/2017-04-15-flying 最新版本新增特性.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/source/_posts/2017-05-01-使用flying解决pojo自动映射问题.md" afterPath="$PROJECT_DIR$/source/_posts/2017-05-01-使用flying解决pojo自动映射问题.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/source/_posts/2017-06-01-flying 是什么.md" afterPath="$PROJECT_DIR$/source/_posts/2017-06-01-flying 是什么.md" />
+      <change afterPath="$PROJECT_DIR$/themes/jacman/source/img/banner5.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/_posts/2017-04-15-flying 最新版本新增特性.md" beforeDir="false" afterPath="$PROJECT_DIR$/source/_posts/2017-04-15-flying 最新版本新增特性.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/_posts/2017-05-01-使用flying解决pojo自动映射问题.md" beforeDir="false" afterPath="$PROJECT_DIR$/source/_posts/2017-05-01-使用flying解决pojo自动映射问题.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/_posts/2017-06-01-flying 是什么.md" beforeDir="false" afterPath="$PROJECT_DIR$/source/_posts/2017-06-01-flying 是什么.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/themes/jacman" beforeDir="false" afterPath="$PROJECT_DIR$/themes/jacman" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/themes/jacman/_config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/themes/jacman/_config.yml" afterDir="false" />
     </list>
-    <ignored path="hexo.iws" />
-    <ignored path=".idea/workspace.xml" />
-    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
-    <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ChangesViewManager" flattened_view="true" show_ignored="false" />
   <component name="CreatePatchCommitExecutor">
     <option name="PATCH_PATH" value="" />
   </component>
   <component name="FavoritesManager">
     <favorites_list name="hexo" />
-  </component>
-  <component name="FileEditorManager">
-    <leaf>
-      <file leaf-file-name="2017-05-01-使用flying解决pojo自动映射问题.md" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/source/_posts/2017-05-01-使用flying解决pojo自动映射问题.md">
-          <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
-            <state split_layout="FIRST">
-              <first_editor vertical-scroll-proportion="0.0">
-                <caret line="729" column="16" selection-start-line="729" selection-start-column="16" selection-end-line="729" selection-end-column="16" />
-                <folding />
-              </first_editor>
-              <second_editor />
-            </state>
-          </provider>
-          <provider editor-type-id="MarkdownFxPreviewEditor">
-            <state />
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="2017-04-15-flying 最新版本新增特性.md" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/source/_posts/2017-04-15-flying 最新版本新增特性.md">
-          <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
-            <state split_layout="FIRST">
-              <first_editor vertical-scroll-proportion="0.43728223">
-                <caret line="118" column="24" selection-start-line="118" selection-start-column="24" selection-end-line="118" selection-end-column="24" />
-                <folding />
-              </first_editor>
-              <second_editor />
-            </state>
-          </provider>
-          <provider editor-type-id="MarkdownFxPreviewEditor">
-            <state />
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="2017-03-01-flying的发展方向.md" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/source/_posts/2017-03-01-flying的发展方向.md">
-          <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
-            <state split_layout="FIRST">
-              <first_editor vertical-scroll-proportion="0.0">
-                <caret line="35" column="17" selection-start-line="35" selection-start-column="17" selection-end-line="35" selection-end-column="17" />
-                <folding />
-              </first_editor>
-              <second_editor />
-            </state>
-          </provider>
-          <provider editor-type-id="MarkdownFxPreviewEditor">
-            <state />
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="2017-06-01-flying 是什么.md" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/source/_posts/2017-06-01-flying 是什么.md">
-          <provider selected="true" editor-type-id="split-provider[text-editor;MarkdownPreviewEditor]">
-            <state split_layout="FIRST">
-              <first_editor vertical-scroll-proportion="0.0">
-                <caret line="68" column="8" selection-start-line="68" selection-start-column="8" selection-end-line="68" selection-end-column="8" />
-                <folding />
-              </first_editor>
-              <second_editor />
-            </state>
-          </provider>
-          <provider editor-type-id="MarkdownFxPreviewEditor">
-            <state />
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="index.html" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/.deploy_git/2017/05/01/2017-05-01-使用flying解决pojo自动映射问题/index.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="154" column="116" selection-start-line="154" selection-start-column="116" selection-end-line="154" selection-end-column="116" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -135,24 +58,15 @@
   <component name="JsGulpfileManager">
     <detection-done>true</detection-done>
   </component>
-  <component name="NamedScopeManager">
-    <order />
-  </component>
   <component name="ProjectFrameBounds">
     <option name="x" value="-9" />
     <option name="y" value="-9" />
     <option name="width" value="1384" />
     <option name="height" value="738" />
   </component>
+  <component name="ProjectId" id="1tWzMyuGmVtmvSeWgQYyHTWLjoO" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
-    <OptionsSetting value="true" id="Add" />
-    <OptionsSetting value="true" id="Remove" />
-    <OptionsSetting value="true" id="Checkout" />
-    <OptionsSetting value="true" id="Update" />
-    <OptionsSetting value="true" id="Status" />
-    <OptionsSetting value="true" id="Edit" />
     <ConfirmationsSetting value="2" id="Add" />
-    <ConfirmationsSetting value="0" id="Remove" />
   </component>
   <component name="ProjectView">
     <navigator currentView="ProjectPane" proportions="" version="1">
@@ -295,21 +209,27 @@
       </pane>
     </panes>
   </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
   <component name="PropertiesComponent">
+    <property name="FullScreen" value="false" />
+    <property name="HbShouldOpenHtmlAsHb" value="" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/themes/jacman/source/img" />
+    <property name="nodejs_package_manager_path" value="npm" />
     <property name="settings.editor.selected.configurable" value="File.Encoding" />
     <property name="settings.editor.splitter.proportion" value="0.2" />
-    <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="HbShouldOpenHtmlAsHb" value="" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../myactiviti-hexo" />
-    <property name="FullScreen" value="false" />
+    <property name="vue.rearranger.settings.migration" value="true" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="E:\node\hexo-1\themes\jacman\source\img" />
+      <recent name="E:\node\hexo-1" />
       <recent name="E:\node\hexo\themes\jacman\source\img" />
       <recent name="E:\node\hexo\public\img" />
       <recent name="E:\node\hexo\source\about\index" />
-      <recent name="E:\node\hexo\source\_posts" />
-      <recent name="E:\node\hexo\source\hello-world" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="E:\node\hexo\source" />
@@ -324,13 +244,6 @@
     <configuration default="true" type="DartUnitRunConfigurationType" factoryName="DartUnit">
       <method />
     </configuration>
-    <configuration default="true" type="JavaScriptTestRunnerKarma" factoryName="Karma" config-file="">
-      <envs />
-      <method />
-    </configuration>
-    <configuration default="true" type="JavascriptDebugType" factoryName="JavaScript Debug">
-      <method />
-    </configuration>
     <configuration default="true" type="JsTestDriver-test-runner" factoryName="JsTestDriver">
       <setting name="configLocationType" value="CONFIG_FILE" />
       <setting name="settingsFile" value="" />
@@ -338,26 +251,17 @@
       <setting name="preferredDebugBrowser" value="Chrome" />
       <method />
     </configuration>
-    <configuration default="true" type="NodeJSConfigurationType" factoryName="Node.js" working-dir="">
-      <method />
-    </configuration>
-    <configuration default="true" type="cucumber.js" factoryName="Cucumber.js">
-      <option name="cucumberJsArguments" value="" />
-      <option name="executablePath" />
-      <option name="filePath" />
-      <method />
-    </configuration>
-    <configuration default="true" type="js.build_tools.gulp" factoryName="Gulp.js">
+    <configuration default="true" type="js.build_tools.gulp">
+      <node-interpreter>project</node-interpreter>
       <node-options />
       <gulpfile />
       <tasks />
       <arguments />
       <pass-parent-envs>true</pass-parent-envs>
-      <envs />
-      <method />
+      <method v="2" />
     </configuration>
   </component>
-  <component name="ShelveChangesManager" show_recycled="false" />
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
     <configuration />
   </component>
@@ -366,113 +270,134 @@
       <changelist id="c58cbdbd-54f8-4094-b94d-8822e2852952" name="Default" comment="" />
       <created>1512725831900</created>
       <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
       <updated>1512725831900</updated>
+      <workItem from="1622899590151" duration="3216000" />
+      <workItem from="1622948092970" duration="5509000" />
     </task>
     <task id="LOCAL-00001" summary="cool">
       <created>1512726353994</created>
       <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
       <option name="project" value="LOCAL" />
       <updated>1512726353994</updated>
     </task>
     <task id="LOCAL-00002" summary="cool">
       <created>1512958699045</created>
       <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
       <option name="project" value="LOCAL" />
       <updated>1512958699045</updated>
     </task>
     <task id="LOCAL-00003" summary="优化“flying是什么”文章">
       <created>1512973086104</created>
       <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
       <option name="project" value="LOCAL" />
       <updated>1512973086104</updated>
     </task>
     <task id="LOCAL-00004" summary="增加文章“完善缓存”和“发展方向”">
       <created>1512976130438</created>
       <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
       <option name="project" value="LOCAL" />
       <updated>1512976130438</updated>
     </task>
     <task id="LOCAL-00005" summary="在文章中放一张图片。使得可以在文章和首页中同时显示">
       <created>1512979523629</created>
       <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
       <option name="project" value="LOCAL" />
       <updated>1512979523629</updated>
     </task>
     <task id="LOCAL-00006" summary="优化文章">
       <created>1512994485749</created>
       <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
       <option name="project" value="LOCAL" />
       <updated>1512994485749</updated>
     </task>
     <task id="LOCAL-00007" summary="增加about页面">
       <created>1513004567347</created>
       <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
       <option name="project" value="LOCAL" />
       <updated>1513004567347</updated>
     </task>
     <task id="LOCAL-00008" summary="增加CNAME">
       <created>1513006173352</created>
       <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
       <option name="project" value="LOCAL" />
       <updated>1513006173352</updated>
     </task>
     <task id="LOCAL-00009" summary="增加初雪版内容">
       <created>1516521788687</created>
       <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
       <option name="project" value="LOCAL" />
       <updated>1516521788687</updated>
     </task>
     <task id="LOCAL-00010" summary="增加初雪版内容 2">
       <created>1516538424684</created>
       <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
       <option name="project" value="LOCAL" />
       <updated>1516538424684</updated>
     </task>
     <task id="LOCAL-00011" summary="增加初雪版内容 3">
       <created>1516543271725</created>
       <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
       <option name="project" value="LOCAL" />
       <updated>1516543271725</updated>
     </task>
     <task id="LOCAL-00012" summary="增加初雪版内容 4">
       <created>1516543960297</created>
       <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
       <option name="project" value="LOCAL" />
       <updated>1516543960297</updated>
     </task>
     <task id="LOCAL-00013" summary="增加初雪版内容 5">
       <created>1516589231505</created>
       <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
       <option name="project" value="LOCAL" />
       <updated>1516589231505</updated>
     </task>
     <task id="LOCAL-00014" summary="开始 flying-阳春 的开发；">
       <created>1522288965922</created>
       <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
       <option name="project" value="LOCAL" />
       <updated>1522288965922</updated>
     </task>
     <task id="LOCAL-00015" summary="写 flying-阳春 的文档；">
       <created>1523028939199</created>
       <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
       <option name="project" value="LOCAL" />
       <updated>1523028939199</updated>
     </task>
     <task id="LOCAL-00016" summary="优化 flying-阳春 的文档；">
       <created>1523264731327</created>
       <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
       <option name="project" value="LOCAL" />
       <updated>1523264731327</updated>
     </task>
     <task id="LOCAL-00017" summary="优化 flying-清明 的文档；">
       <created>1554723358827</created>
       <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
       <option name="project" value="LOCAL" />
       <updated>1554723358827</updated>
     </task>
     <task id="LOCAL-00018" summary="New changelist">
       <created>1554723428164</created>
       <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
       <option name="project" value="LOCAL" />
       <updated>1554723428164</updated>
     </task>
@@ -503,6 +428,21 @@
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
   <component name="Vcs.Log.UiProperties">
     <option name="RECENTLY_FILTERED_USER_GROUPS">
       <collection />
@@ -511,11 +451,7 @@
       <collection />
     </option>
   </component>
-  <component name="VcsContentAnnotationSettings">
-    <option name="myLimit" value="2678400000" />
-  </component>
   <component name="VcsManagerConfiguration">
-    <option name="OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT" value="false" />
     <MESSAGE value="cool" />
     <MESSAGE value="优化“flying是什么”文章" />
     <MESSAGE value="增加文章“完善缓存”和“发展方向”" />
@@ -534,10 +470,6 @@
     <MESSAGE value="优化 flying-清明 的文档；" />
     <MESSAGE value="New changelist" />
     <option name="LAST_COMMIT_MESSAGE" value="New changelist" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager />
-    <watches-manager />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/source/_posts/2017-05-01-使用flying解决pojo自动映射问题.md">

@@ -118,7 +118,7 @@ Account account = accountMapper.selectOne(accountCondition);
 修改操作：
 ```xml
 {
-  "action":"update|updatePersistent"
+  "action":"update|updatePersistent|updateBatch"
     [, "ignore":"__ignore__"][, "whiteList":"__whiteList__"]
 }
 ```
@@ -145,9 +145,10 @@ Account account = accountMapper.selectOne(accountCondition);
 `count`：按条件对象查询，返回结果数量；
 `update`：按参数对象中的非 null 属性更新记录，可按主键执行一条也可批量执行多条；
 `updatePersistent`：按参数对象中的所有属性更新一条记录，以参数主键为准，此操作会把参数对象为 null 的属性在数据库中也更新为 [null]；
+`updateBatch`：按集合型参数对象同时更新多条记录，更新方式同 `update`（`1.0.1` 版新增）；
 `delete`：按参数对象删除记录，可按主键执行一条也可批量执行多条；
 `insert`：按参数对象增加一条记录，在 insert 之后可以以括号的方式指定主键生成方式（可选），内置有 uuid、无下横线的 uuid_no_line、按毫秒值 millisecond，也可完全自定义主键生成器类；
-`insertBatch`：按集合型参数对象增加多条记录，"keyGenerator" 同 `insert`（`1.0.0` 版新增）；
+`insertBatch`：按集合型参数对象同时增加多条记录，"keyGenerator" 同 `insert`（`1.0.0` 版新增）；
 
 本文为描述方便，大部分方法名（即方法配置中的 id）与其操作类型（即 json 中的 "action"）相同，实际上方法名可以任意取，当您打算在同一个 <i>pojo_mapper</i>.xml 中定义多个操作类型相同的方法时就会发现这一点。如果您有更多操作类型的想法请告诉我们。
 
